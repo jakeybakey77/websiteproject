@@ -72,6 +72,20 @@ Figma rendered each application workspace. Structural audit reported zero horizo
 
 Visually checked representative desktop and mobile form/validation/receipt renders. Structural audit reported zero horizontal overflow across all ten frames. Remaining: merchant admin, ISO CRM, supporting sign-in and final verification.
 
+### Merchant admin — `/admin/`
+
+[Merchant admin section](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=11-6). Includes KPI snapshot, stage and source breakdowns, screening, filters, synthetic records, keyboard focus on the business link, and the inquiry detail/review panel with reason states.
+
+| State | Desktop | Mobile |
+|---|---|---|
+| Overview | [11:7](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=11-7) | [11:732](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=11-732) |
+| Filtered list | [11:273](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=11-273) | [11:962](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=11-962) |
+| Inquiry detail | [11:406](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=11-406) | [11:1057](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=11-1057) |
+| Needs info reason | [11:510](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=11-510) | [11:1135](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=11-1135) |
+| Closed reason | [11:621](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=11-621) | [11:1220](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=11-1220) |
+
+Desktop overview, filtered view and detail, and mobile overview and detail screenshot-reviewed. Structural audit reported zero horizontal overflow. Remaining: ISO CRM, supporting sign-in and final QA.
+
 ---
 
 ## A. YOUR JOB — EXECUTE, DON'T RE-PLAN
