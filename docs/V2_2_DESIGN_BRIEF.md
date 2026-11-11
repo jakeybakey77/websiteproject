@@ -10,7 +10,7 @@ Nothing in `public/`, `server/`, `scripts/` or `tests/` was changed. All facts b
 |---|---|---|---|---|---|---|
 | 1 | Homepage | `/`, `/index.html` | `public/index.html` | `js/pages/landing.js` (carries UTM query to links marked `data-carry-query`) | `landing.css` | none |
 | 2 | Merchant application | `/apply.html` | `public/apply.html` (shell only) | `js/pages/apply.js`, rendered from `js/config/form-schema.js` | `apply.css` | `POST /api/inquiries` |
-| 3 | ISO partner landing | **does not exist in v2.1** — new static page, name to be decided (see §6) | — | — | — | none |
+| 3 | ISO partner landing | **does not exist in v2.1** — new static page at `/partner-program.html` (approved) | — | — | — | none |
 | 4 | ISO partner application | `/partners.html` | `public/partners.html` | `js/pages/partners.js` | `apply.css`, `partners.css` | `POST /api/iso/applications` |
 | 5 | Admin dashboard | `/admin/` | `public/admin/index.html` | `js/pages/dashboard.js` | `dashboard.css` | `GET /api/admin/leads`, `GET /api/admin/audit`, review POST |
 | 6 | ISO CRM | `/admin/iso.html` (list and detail are two views in one page) | `public/admin/iso.html` | `js/pages/iso-admin.js` | `dashboard.css`, `iso.css` | `/api/admin/iso/…` (see `VERSION_2_1_NOTES.md` §3) |
@@ -107,14 +107,21 @@ Navigation (public header, mobile menu, admin sidebar, admin top bar, footer, de
 
 Each with desktop and mobile variants on auto layout.
 
-## 6. Open decisions
+## 6. Decisions
 
-1. **Figma access.** A Figma connector with write access to a file must be available to the session that builds the designs, or the designs must be built another way and imported.
-2. **Route for the partner landing page.** Options: a new `/partner-program.html` that links to the existing `/partners.html` form (no route changes), or move the form and make `/partners.html` the landing page (changes an existing route; not recommended).
-3. **Partner application as one page or two steps.** One page needs no logic change.
-4. **Typeface.** Keep Aptos Display with fallbacks, or switch headings to a freely licensed face that renders identically everywhere.
-5. **Homepage "product" language.** v2.1 deliberately describes purposes of capital, not products or offers. A "financing product overview" must stay descriptive unless real product terms are supplied and reviewed.
-6. **Brokerage positioning.** The current FAQ states the site is "not an operating lender or commercial-financing brokerage". Presenting it as a brokerage platform is a positioning choice that needs to be reconciled with that wording.
-7. **Footer link to the admin dashboard** ("View synthetic dashboard") — keep for the demo or remove from the public footer.
-8. **Admin detail pattern.** Side panel versus the current modal dialog.
-9. **Stale footer text.** The homepage footer says "Demo v1.1" and the FAQ says nothing is stored on a server, while `/apply.html` says submissions are stored on the demo server. Copy should be corrected when the page is rebuilt.
+### Decided
+
+1. **Design tool.** Figma first. Standalone HTML mockups are not an accepted substitute.
+2. **Partner landing route.** New static page at `/partner-program.html`, linking to the existing `/partners.html` form. No existing route changes.
+3. **Positioning.** Present Greenwich Credit Partners as a small-business financing brokerage platform, and state explicitly on every public page that the current system is a demonstration prototype and not an operating brokerage or lender.
+4. **Copy corrections in the proposed designs.** Disclosures must say that demo submissions are stored on the demo server (the homepage strip and FAQ currently say nothing is collected or stored), and the footer must not carry the outdated "Demo v1.1" label.
+5. **Preserved.** All existing routes, APIs and validation.
+
+### Still open
+
+1. **Figma access.** A Figma connector able to create and edit Design files must be connected to the session that builds the designs. As of the second session it is still not installed.
+2. **Partner application as one page or two steps.** One page needs no logic change.
+3. **Typeface.** Keep Aptos Display with fallbacks, or switch headings to a freely licensed face that renders identically everywhere.
+4. **Homepage "product" language.** v2.1 describes purposes of capital, not products or offers. A financing category overview must stay descriptive unless real product terms are supplied and reviewed.
+5. **Footer link to the admin dashboard** ("View synthetic dashboard") — keep for the demo or remove from the public footer.
+6. **Admin detail pattern.** Side panel versus the current modal dialog.
