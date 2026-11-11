@@ -21,6 +21,19 @@
 - Verified the three original Figma pages (`0:1`, `2:2`, `2:3`), all initially empty. Verified `GCP Tokens` (`VariableCollectionId:2:4`), 25 color variables (`VariableID:2:5`–`2:29`), 19 numeric variables (`VariableID:2:30`–`2:48`), 18 text styles and four effect styles.
 - Write access verified by building and independently reading [Actions](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=4-2), [Button](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=4-67) and [Button compact](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=4-68). Both are native auto-layout component sets, with 16 variants each. Confirmed bindings for fills, padding and radii. Remaining: foundations and shared UI, then all six desktop/mobile screen types.
 
+### Foundations and homepage
+
+- [02 Foundations](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=5-2)
+- [03 Navigation & disclosures](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=5-144)
+- [04 Forms & content](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=5-223)
+- [05 Admin shell](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=5-475)
+- Component IDs: Demo strip `5:149`, Public header `5:197`, Public footer `5:220`, Skip link `5:221`, Form field `5:334`, Choice control `5:367`, Inline error `5:368`, Error summary `5:371`, Demo callout `5:374`, Identity card `5:377`, Review block `5:380`, Confirmation `5:383`, Process card `5:386`, KPI card `5:389`, Activity item `5:392`, Detail panel `5:395`, Import stepper `5:398`, Score factor `5:401`, Checklist row `5:406`, Table header `5:409`, Filter chip `5:412`, Tab `5:415`, Pipeline bar `5:418`, FAQ item `5:428`, Status badge `5:439`, Stepper step `5:449`, Table row `5:474`, Admin navigation `5:516`.
+- Local text style IDs: Display/XL `S:cd8a98fbca5659d3e147f3150854b30ba2e30191,`, Display/L `S:ff4ea1a24280a7bacc3a10a18de897658e73f70c,`, Display/M `S:31e30e11b43277acca5580ad607650c47a718950,`, Display/S `S:1aee8fd721a0d148824266594e02f3d3dc020cce,`, Heading/L `S:c7f3dfe0722cdc62e3fa28123ae98983ede6bcb1,`, Heading/M `S:a9d1ec34e929881b1ceca3ff6d42f590e151d43b,`, Heading/S `S:ae0ae8c5d45ee24a70a766aa4a3cc758b57ab4d6,`, Body/L `S:13686fb92f46891ebdb72a042d67306614023dcd,`, Body/M `S:24d105c0f651e220e71356d08a3b9ba5f30ba145,`, Body/M Strong `S:23de1cafb8a310302b72f600aedab47d2abc1f1f,`, Body/S `S:3d44e2700315dc428c7d0535cc1cbef7c202d54a,`, Body/S Strong `S:74e4c50e21fe7782453a23878208af93b3d6af54,`, Label/M `S:3748b24c72b530fdcdabbaf1437b0761a555d8d4,`, Label/S `S:74625da217332adebfc7d86b6e1fb91716531700,`, Overline `S:156d5faea41f07c05a892c614c723ad974b10bc6,`, Numeric/XL `S:3f246ec2ac185cb9dce6c956b52590c96574ecec,`, Numeric/L `S:37798b4fcf3873be65207de98539e50b17e15cc6,`, Mono/S `S:442a4027aef4890aad103e7a92287c34aeb75fb0,`.
+- Local effect style IDs: Shadow/SM `S:2298c3ecac50e60a39e5387330d1ab3fea4a3df8,`, Shadow/MD `S:15845c2280617fdaf0ef65d9f309c3f25194d32c,`, Shadow/LG `S:54723061806156df95cd1649904441e95ba8c8ab,`, Focus ring `S:c6f39e52f8d01351798fc3d09c622277529a2445,`.
+- Token contrast measured from Figma: white/blue 4.80:1, white/navy 14.89:1, secondary text/white 5.56:1, control border/white 3.21:1, error/tint 6.98:1, success/tint 5.74:1, warning/tint 5.43:1, dark blue/pale blue 7.26:1.
+- Homepage `/`, `/index.html`: [Desktop 1440](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=6-7), [Mobile 390](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=6-128), [Mobile menu](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=6-247). Screenshot-reviewed both sizes and menu. Corrected FAQ toggle wrapping and rechecked both widths. Desktop and mobile retain merchant and ISO paths and the server-storage disclosure. UTM carry-over remains in the future implementation map.
+- Remaining: five screen types and supporting admin sign-in.
+
 ---
 
 ## A. YOUR JOB — EXECUTE, DON'T RE-PLAN
