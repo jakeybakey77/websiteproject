@@ -95,6 +95,28 @@ Desktop overview, filtered view and detail, and mobile overview and detail scree
 - **Decisions for approval:** Provisional Source Serif 4 display face, public demo dashboard link retained in the footer, merchant review in a desktop side panel/mobile sheet, and merchant row clicks backed by the business-name control. All screen states are editable Figma frames. Prototype links between screens have not been wired.
 - **Scope:** Only this handoff and the design brief were updated on `feat/v2.2-figma-redesign`. No app, database, API, Railway or deployment work. No application tests run. Request design approval only after the sixth screen and QA are complete.
 
+
+### Resumed after the Education upgrade — ISO CRM
+
+- Resumed from `df335b63f5ace9b9ad77503c10c89dc75c71591f`. Verified native writes by creating and reading back the token-bound [ISO organization card](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=13-18) on the existing design-system page. Its default, selected and focus variants are `13:6`, `13:10`, `13:14`.
+- Built [06 ISO CRM](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-376) for `/admin/iso.html`. All 47 previously checkpointed screen frames were retained. The CRM reuses the existing tokens, typography, components and shell, plus the organization card in mobile and desktop master-detail.
+
+| State | Desktop | Mobile |
+|---|---|---|
+| Organization list | [14:377](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-377) | [14:1605](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-1605) |
+| Organization overview | [14:661](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-661) | [14:1836](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-1836) |
+| Verification | [14:793](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-793) | [14:1951](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-1951) |
+| Score and overrides | [14:921](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-921) | [14:2056](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-2056) |
+| Evidence | [14:1062](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-1062) | [14:2174](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-2174) |
+| Contacts | [14:1188](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-1188) | [14:2277](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-2277) |
+| Activity and follow-ups | [14:1287](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-1287) | [14:2353](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-2353) |
+| CSV upload | [14:1383](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-1383) | [14:2426](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-2426) |
+| CSV preview and mapping | [14:1424](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-1424) | [14:2462](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-2462) |
+| CSV result | [14:1525](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-1525) | [14:2564](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-2564) |
+| Duplicate review | [14:1560](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-1560) | [14:2594](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-2594) |
+
+First screenshot pass reviewed both lists, desktop master-detail and score, and mobile CSV mapping. Structural audit found two mobile fields with long placeholder overflow. Next: supporting sign-in, correct those fields and merchant table issues, wire prototype links, finish visual QA.
+
 ---
 
 ## A. YOUR JOB — EXECUTE, DON'T RE-PLAN
