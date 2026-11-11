@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Funding inquiry | Greenwich Credit Partners demo</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#14293b" />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/apply.css" />
+    <script type="module" src="js/pages/apply.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+
+    <div class="demo-strip" role="note">
+      <div class="container">
+        <strong>Prototype</strong>Simulation only. Use fictional business details; demo submissions are stored on this server for workflow testing.
+      </div>
+    </div>
+
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="index.html">Greenwich Credit Partners</a>
+        <a href="index.html">Back to home</a>
+      </div>
+    </header>
+
+    <main id="main" class="container apply">
+      <noscript>
+        <p class="marker">This form needs JavaScript. Turn it on in your browser settings and reload the page.</p>
+      </noscript>
+
+      <nav id="progress" class="progress" aria-label="Inquiry progress"></nav>
+
+      <!--
+        The steps are rendered by js/pages/apply.js from js/config/form-schema.js.
+
+        TODO(consent): before live collection, add reviewed consent language here: consent to be
+        contacted (calls, texts, email), consent to share the inquiry with named funding
+        providers, and acceptance of the Privacy Policy and Terms. Record what was shown and when.
+        TODO(privacy): demo mode shows a fictional contact. Real contact fields must not be added
+        until storage, access control and retention are in place.
+      -->
+      <form id="inquiry-form" class="sheet inquiry" novalidate>
+        <div id="error-summary" class="error-summary" tabindex="-1" hidden></div>
+        <h1 id="step-title" tabindex="-1"></h1>
+        <p id="step-intro" class="step-intro"></p>
+        <div id="step-body" class="step-body"></div>
+        <div class="form-actions">
+          <button type="button" id="back" class="button button-quiet">Back</button>
+          <button type="submit" id="next" class="button">Continue</button>
+        </div>
+      </form>
+
+      <p id="status" class="status" role="status"></p>
+      <p class="fine">
+        Do not enter real names, account numbers or financial documents. Greenwich Credit Partners is not a lender and does not approve or decline funding. This form is a demonstration.
+      </p>
+    </main>
+  </body>
+</html>

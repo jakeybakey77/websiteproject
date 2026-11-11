@@ -1,0 +1,15 @@
+{
+  "name": "greenwich-credit-partners-mvp",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Server-backed demo MVP for small-business funding inquiries with authenticated reviewer workflow. Synthetic data only.",
+  "scripts": {
+    "start": "node scripts/server.mjs",
+    "test": "node --test",
+    "check": "node --check scripts/server.mjs && node --check server/app.mjs && node --check public/js/pages/apply.js && node --check public/js/pages/dashboard.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}

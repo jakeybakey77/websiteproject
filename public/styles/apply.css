@@ -1,0 +1,311 @@
+/* Inquiry form only. */
+.apply {
+  max-width: 42rem;
+  padding-block: var(--space-6) var(--space-8);
+}
+
+.fine,
+.status {
+  margin-top: var(--space-4);
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+.status:empty {
+  display: none;
+}
+
+/* Progress ---------------------------------------------------------------- */
+.progress {
+  margin-bottom: var(--space-5);
+}
+
+.progress p {
+  margin-bottom: var(--space-2);
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+.progress ol {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.progress li {
+  padding-top: var(--space-2);
+  border-top: 4px solid var(--rule);
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  line-height: 1.25;
+}
+
+.progress li.is-done {
+  border-color: var(--ledger);
+}
+
+.progress li.is-current {
+  border-color: var(--ink);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* On narrow screens the bars stay and the "Step 2 of 5: ..." line carries the names. */
+@media (max-width: 36rem) {
+  .progress li span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+
+/* Sheet ------------------------------------------------------------------- */
+.inquiry,
+.confirmation {
+  padding: var(--space-5);
+}
+
+@media (min-width: 36rem) {
+  .inquiry,
+  .confirmation {
+    padding: var(--space-6);
+  }
+}
+
+.inquiry h1,
+.confirmation h1 {
+  font-size: var(--text-2xl);
+}
+
+.inquiry h1:focus,
+.confirmation h1:focus {
+  outline: none;
+}
+
+.step-intro {
+  margin-top: var(--space-2);
+  color: var(--ink-soft);
+}
+
+.step-body {
+  display: grid;
+  gap: var(--space-5);
+  margin-block: var(--space-5) var(--space-6);
+}
+
+/* Fields ------------------------------------------------------------------ */
+.field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.field > label,
+.field legend {
+  font-weight: 700;
+}
+
+.field fieldset {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.field legend {
+  padding: 0;
+  margin-bottom: var(--space-1);
+}
+
+.hint {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+.field select,
+.field textarea,
+.field input[type='text'] {
+  width: 100%;
+  min-height: 2.875rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--ink-soft);
+  border-radius: var(--radius);
+  background: var(--sheet);
+  color: var(--ink);
+  font: inherit;
+}
+
+.field select {
+  max-width: 26rem;
+}
+
+.money {
+  display: flex;
+  max-width: 14rem;
+}
+
+.money span {
+  display: grid;
+  place-items: center;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--ink-soft);
+  border-right: 0;
+  border-radius: var(--radius) 0 0 var(--radius);
+  background: var(--paper);
+  color: var(--ink-soft);
+}
+
+.money input[type='text'] {
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Radio and checkbox rows: the whole row is the tap target. */
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.choice:has(input:checked) {
+  border-color: var(--ledger);
+  background: var(--ledger-tint);
+}
+
+.choice:has(input:focus-visible) {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.choice input {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0.15rem 0 0;
+  accent-color: var(--ledger);
+}
+
+.choice input:focus-visible {
+  outline: none;
+}
+
+/* Errors ------------------------------------------------------------------ */
+.field-error {
+  color: var(--error);
+  font-weight: 700;
+}
+
+.field-error:empty {
+  display: none;
+}
+
+.field.has-error {
+  padding-left: var(--space-4);
+  border-left: 4px solid var(--error);
+}
+
+.field.has-error select,
+.field.has-error textarea,
+.field.has-error input[type='text'] {
+  border-color: var(--error);
+  border-width: 2px;
+}
+
+.error-summary {
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+  border: 2px solid var(--error);
+  border-radius: var(--radius);
+  background: var(--error-tint);
+}
+
+.error-summary h2 {
+  margin-bottom: var(--space-2);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  letter-spacing: 0;
+}
+
+.error-summary ul {
+  padding-left: var(--space-5);
+}
+
+.error-summary a {
+  color: var(--error);
+  font-weight: 700;
+}
+
+/* Fictional contact + review ---------------------------------------------- */
+.identity {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+}
+
+.identity .ledger {
+  width: 100%;
+}
+
+.review-section + .review-section {
+  margin-top: var(--space-2);
+}
+
+.review-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.review-head h2 {
+  font-size: var(--text-lg);
+}
+
+/* Actions ----------------------------------------------------------------- */
+.form-actions {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.form-actions .button[type='submit'] {
+  margin-left: auto;
+}
+
+@media (max-width: 26rem) {
+  .form-actions .button {
+    width: 100%;
+  }
+}
+
+.confirmation {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.confirmation .actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-5);
+  margin-top: var(--space-2);
+}
+
+/* v1.1 blue/white form polish */
+.apply { padding-block: clamp(2rem, 5vw, 4rem); }
+.progress li.is-current { border-color: var(--blue); color: var(--navy); }
+.inquiry, .confirmation { border-top-color: var(--blue); border-radius: 9px; box-shadow: 0 20px 45px #14304b10; }
+.inquiry h1 { letter-spacing: -.035em; }
