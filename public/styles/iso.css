@@ -71,3 +71,15 @@ details.disclose > summary { cursor: pointer; color: var(--ledger-dark); font-we
 .mapping { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); margin-block: var(--space-3); }
 .mapping > div { display: grid; gap: var(--space-1); font-size: var(--text-sm); }
 .mapping label { font-weight: 700; }
+
+/* Entire ISO organization row is clickable; the name stays a keyboard-accessible link. */
+.iso-openable-row { cursor: pointer; }
+.iso-openable-row:hover,
+.iso-openable-row:focus-within { background: var(--ledger-tint); }
+.iso-row-link { color: inherit; text-decoration: none; }
+.iso-openable-row:hover .iso-row-link { text-decoration: underline; }
+.iso-row-link:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+  text-decoration: underline;
+}
