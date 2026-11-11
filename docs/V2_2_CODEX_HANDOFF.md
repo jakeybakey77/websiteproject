@@ -117,6 +117,21 @@ Desktop overview, filtered view and detail, and mobile overview and detail scree
 
 First screenshot pass reviewed both lists, desktop master-detail and score, and mobile CSV mapping. Structural audit found two mobile fields with long placeholder overflow. Next: supporting sign-in, correct those fields and merchant table issues, wire prototype links, finish visual QA.
 
+### Design review checkpoint — ready for approval
+
+- Finished all six required screen types at 1440px and 390px in the existing Figma file. All 47 prior frame IDs were retained. Added 22 ISO CRM state frames and six sign-in state frames, for 75 editable screen/state frames. The existing 30 component families were retained and one organization-card set was added. No tokens or styles were recreated.
+- Supporting sign-in `/admin/login.html` uses the existing brand and controls. It shows restricted reviewer access, loading and failure with password focus.
+
+| Sign-in state | Desktop | Mobile |
+|---|---|---|
+| Default | [15:1379](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=15-1379) | [15:1460](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=15-1460) |
+| Signing in | [15:1405](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=15-1405) | [15:1486](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=15-1486) |
+| Sign-in error | [15:1431](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=15-1431) | [15:1512](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=15-1512) |
+
+- Prototype entry points: [Public desktop](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=6-7), [Public mobile](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=6-128), [Admin desktop](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=15-1379), [Admin mobile](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=15-1460), [ISO CRM desktop](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-377), [ISO CRM mobile](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=14-1605). Public flows link navigation, merchant steps and conditional financing, partner application and receipts. Admin flows link sign-in, the sample merchant inquiry, ISO workspace tabs and CSV preview/result/duplicate review. Native navigation links connect frames on the same page, with prototype URLs for public-to-admin and admin-to-public. Verified 21 representative destinations by reading saved reactions. Form inputs, errors, authentication, reviewer saves and imports are simulated design states. Validation, failure and JavaScript-disabled states can be reviewed from their frame links. A merchant review Change action links to the existing step frame; the app's edit-return behavior remains in the source handoff.
+- Visual QA: reviewed previously outstanding and new desktop/mobile states, including login failure and password focus, ISO evidence and verification, score/history, import preview and duplicate review. Corrected long mobile field values, narrowed desktop table gaps to fit State and Received labels, filtered the merchant sample list to In review, added public-site and sign-out links in the mobile admin shell, and verified the corrected layouts. Final audits found zero horizontal-overflow findings across 37 public and 38 admin frames. The main prototype paths were verified from stored Figma reactions. Live keyboard order, modal focus management and screen-reader output remain implementation checks.
+- For design approval: Source Serif 4 remains provisional. Other proposals are the public dashboard link, desktop inquiry side panel/mobile sheet and clickable merchant table rows. The new partner program route is a design proposal. Business and ISO rules, authentication, APIs, synthetic identities, SQLite and deployment stay as implemented. This continuation changed only `docs/V2_2_CODEX_HANDOFF.md`. No application tests ran. Frontend work is gated on design approval.
+
 ---
 
 ## A. YOUR JOB — EXECUTE, DON'T RE-PLAN
