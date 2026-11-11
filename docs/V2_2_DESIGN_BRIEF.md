@@ -1,6 +1,6 @@
-# v2.2 redesign — design brief (pre-Figma)
+# v2.2 redesign — design brief
 
-**Status: no Figma file exists yet.** The session that wrote this brief had no Figma connector, so no screens were created. This document holds the parts of the v2.2 deliverable that do not depend on Figma: the source audit, the screen-to-route map, the proposed UX changes, the token and component inventory to build, and the open decisions. It is the input for the Figma work, not a substitute for it.
+**Status:** The [existing v2.2 Figma design](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu) is editable through the Figma connector. See [the continuation checkpoint](V2_2_CODEX_HANDOFF.md) for completed frames, node IDs and review status.
 
 Nothing in `public/`, `server/`, `scripts/` or `tests/` was changed. All facts below were read from the v2.1 source on this branch.
 
@@ -119,7 +119,7 @@ Each with desktop and mobile variants on auto layout.
 
 ### Still open
 
-1. **Figma access.** A Figma connector able to create and edit Design files must be connected to the session that builds the designs. As of the second session it is still not installed.
+1. **Figma access.** Verified read and write access to the existing file during the Codex continuation. See the handoff for current build status.
 2. **Partner application as one page or two steps.** One page needs no logic change.
 3. **Typeface.** Keep Aptos Display with fallbacks, or switch headings to a freely licensed face that renders identically everywhere.
 4. **Homepage "product" language.** v2.1 describes purposes of capital, not products or offers. A financing category overview must stay descriptive unless real product terms are supplied and reviewed.
