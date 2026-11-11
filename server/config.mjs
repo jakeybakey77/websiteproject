@@ -53,6 +53,16 @@ if (production && !adminPassword) {
 if (production && !sessionSecret) {
   throw new Error('SESSION_SECRET is required when NODE_ENV=production.');
 }
+// Fail closed on weak or copied-from-the-example secrets in production.
+if (production) {
+  const placeholder = /replace-with|changeme|change-me|^password$|^admin$/i;
+  if (adminPassword.length < 12 || placeholder.test(adminPassword)) {
+    throw new Error('ADMIN_PASSWORD must be at least 12 characters and must not be a placeholder when NODE_ENV=production.');
+  }
+  if (sessionSecret.length < 32 || placeholder.test(sessionSecret)) {
+    throw new Error('SESSION_SECRET must be at least 32 random characters and must not be a placeholder when NODE_ENV=production.');
+  }
+}
 
 export const config = Object.freeze({
   port: int('PORT', 4173),

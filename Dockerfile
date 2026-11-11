@@ -7,7 +7,8 @@ ENV NODE_ENV=production \
     GCP_DEMO_MODE=true \
     GCP_DB_PATH=/data/gcp.sqlite \
     COOKIE_SECURE=true
+# Persistent storage: attach a Railway volume mounted at /data (no Dockerfile VOLUME
+# instruction; Railway manages volumes itself and PORT is injected at runtime).
 RUN mkdir -p /data
-VOLUME ["/data"]
 EXPOSE 4173
 CMD ["node", "scripts/server.mjs"]

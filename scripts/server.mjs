@@ -6,7 +6,8 @@ await app.listen();
 
 console.log(`Greenwich Credit Partners: http://localhost:${config.port}/`);
 console.log(`Admin login:             http://localhost:${config.port}/admin/login.html`);
-console.log(`SQLite database:         ${config.dbPath}`);
+console.log(`SQLite database:         ${config.dbPath} (schema v${app.db.schemaVersion()})`);
+console.log(`Partner demo form:       http://localhost:${config.port}/partners.html`);
 console.log(`Demo collection:         ${config.demoMode ? 'enabled (fictional data only)' : 'disabled'}`);
 if (config.generatedAdminPassword) {
   console.log(`Local admin username:    ${config.adminUsername}`);
@@ -15,9 +16,19 @@ if (config.generatedAdminPassword) {
 }
 if (config.generatedSessionSecret) console.log('A temporary local SESSION_SECRET was generated for this run.');
 
-const shutdown = async () => {
-  await app.close();
-  process.exit(0);
+let shuttingDown = false;
+const shutdown = async (signal) => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`${signal} received: closing HTTP server and database.`);
+  try {
+    await app.close();
+    console.log('Shutdown complete.');
+    process.exit(0);
+  } catch (error) {
+    console.error('Shutdown failed:', error.message);
+    process.exit(1);
+  }
 };
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));

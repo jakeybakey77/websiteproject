@@ -1,0 +1,8 @@
+organization_name,legal_name,website,state,specializations,relationship_type,contact_name,contact_role,contact_email,contact_phone
+Sample Meadow Capital,Sample Meadow Capital LLC,https://sample-meadow-capital.example,CT,working_capital;sba,iso,Jamie Placeholder,Principal,jamie.placeholder@example.com,(203) 555-0181
+Demo Quarry Brokers,Demo Quarry Brokers Inc,https://demo-quarry-brokers.example,NY,equipment_finance;line_of_credit,broker,Robin Sample,Broker of Record,robin.sample@example.org,(212) 555-0182
+"Fictional Orchard Referrals, Inc.",,https://fictional-orchard.example,NJ,invoice_factoring,referral_partner,Sky Testcase,Partner Manager,sky.testcase@example.net,(201) 555-0183
+Placeholder Summit Finance,,https://placeholder-summit.example,MA,sba;commercial_real_estate,iso,,,,
+Example Tidewater Advisors,Example Tidewater Advisors LLC,,FL,revenue_based,referral_partner,Drew Fictional,Managing Director,drew.fictional@example.com,(305) 555-0184
+Sample Meadow Capital Group,,https://sample-meadow-capital.example,CT,working_capital,iso,Lee Demo,Analyst,lee.demo@example.com,(203) 555-0185
+Demo Quarry Brokers LLC,,,NY,,broker,,,,

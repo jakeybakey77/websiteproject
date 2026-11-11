@@ -1,0 +1,73 @@
+/* ISO partner workspace. Extends dashboard.css; same blue/white system. */
+.view[hidden] { display: none; }
+.view { display: grid; gap: var(--space-5); min-width: 0; }
+.panel-sub { margin-block: var(--space-5) var(--space-3); font-family: var(--font-body); font-size: var(--text-base); letter-spacing: 0; }
+.panel > .panel-sub:first-child { margin-top: 0; }
+
+/* Tags for ISO stages, verification, evidence and tiers. Text carries the meaning. */
+.tag-applied, .tag-imported, .tag-asserted, .tag-unverified { border-left-color: var(--ledger); }
+.tag-research_needed, .tag-under_review, .tag-in_review { border-left-color: var(--ink); }
+.tag-verified, .tag-outreach_ready, .tag-contacted, .tag-engaged, .tag-active_partner, .tag-confirmed { border-left-color: var(--ledger-dark); background: var(--ledger-tint); }
+.tag-disqualified, .tag-failed, .tag-refuted, .tag-warn { border-left-color: var(--error); }
+.tag-archived, .tag-muted { border-left-color: var(--rule); color: var(--ink-soft); }
+.tier { display: inline-grid; place-items: center; min-width: 1.9rem; height: 1.9rem; padding-inline: 0.4rem; border: 1px solid var(--ink); border-radius: 4px; font-weight: 800; }
+.tier-A { background: var(--navy); border-color: var(--navy); color: #fff; }
+.tier-B { background: var(--blue); border-color: var(--blue); color: #fff; }
+.tier-C { background: var(--ledger-tint); border-color: var(--blue); }
+.tier-D, .tier-none { background: var(--sheet); border-color: var(--rule); color: var(--ink-soft); }
+.tier-note { margin-left: var(--space-2); color: var(--ink-soft); font-size: 0.75rem; }
+
+/* Forms inside panels */
+.import-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3) var(--space-4); }
+.import-form > div { display: grid; gap: var(--space-1); }
+.import-form label, .mini-form label { font-size: var(--text-sm); font-weight: 700; }
+.mini-form { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); align-items: end; margin-top: var(--space-3); }
+.mini-form > div { display: grid; gap: var(--space-1); min-width: 0; }
+.mini-form > .span { grid-column: 1 / -1; }
+.mini-form input, .mini-form select, .mini-form textarea, .import-form input[type='file'], .mapping select {
+  width: 100%; min-height: 2.5rem; padding: var(--space-1) var(--space-3); border: 1px solid var(--ink-soft); border-radius: 8px; background: var(--sheet); color: var(--ink); font: inherit;
+}
+.mini-form textarea { min-height: 4.5rem; padding-block: var(--space-2); resize: vertical; }
+.mini-form .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); grid-column: 1 / -1; }
+.form-status { color: var(--ink-soft); font-size: var(--text-sm); }
+.form-status.is-error { color: var(--error); font-weight: 700; }
+details.disclose { margin-top: var(--space-3); border-top: 1px solid var(--rule-soft); padding-top: var(--space-3); }
+details.disclose > summary { cursor: pointer; color: var(--ledger-dark); font-weight: 700; font-size: var(--text-sm); }
+
+/* Detail view */
+.detail-head { display: grid; gap: var(--space-3); }
+.detail-head h1 { overflow-wrap: anywhere; }
+.detail-tags { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); font-size: var(--text-sm); }
+.back-link { justify-self: start; font-size: var(--text-sm); font-weight: 700; }
+.callout { padding: var(--space-3) var(--space-4); border: 1px solid var(--rule); border-left: 4px solid var(--error); border-radius: 4px; background: var(--error-tint); font-size: var(--text-sm); }
+.callout.info { border-left-color: var(--blue); background: var(--ledger-tint); }
+.callout ul { margin: var(--space-2) 0 0; padding-left: var(--space-5); }
+.detail-grid { display: grid; gap: var(--space-5); min-width: 0; }
+@media (min-width: 64rem) { .detail-grid { grid-template-columns: 1fr 1fr; align-items: start; } }
+.detail-grid > * { min-width: 0; }
+.panel .ledger { font-size: var(--text-sm); }
+
+.score-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-4); }
+.score-number { font-family: var(--font-display); font-size: var(--text-2xl); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.score-number small { color: var(--ink-soft); font-size: var(--text-base); font-weight: 400; }
+.factors { display: grid; gap: var(--space-4); margin-top: var(--space-4); padding: 0; list-style: none; }
+.factors > li { display: grid; gap: var(--space-1); font-size: var(--text-sm); }
+.factor-top { display: flex; justify-content: space-between; gap: var(--space-3); font-weight: 700; }
+.factor-top span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.factors .track { height: 0.5rem; background: var(--rule-soft); }
+.factors .fill { display: block; width: var(--share); height: 100%; background: var(--ledger); }
+.reasons { margin: 0; padding-left: var(--space-5); color: var(--ink-soft); }
+.reasons code, .history code, .item-meta code { font-size: 0.75rem; color: var(--ink); overflow-wrap: anywhere; }
+
+.items { display: grid; gap: var(--space-3); padding: 0; list-style: none; }
+.items > li { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--rule); border-radius: 6px; font-size: var(--text-sm); min-width: 0; }
+.item-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); font-weight: 700; }
+.item-meta { color: var(--ink-soft); overflow-wrap: anywhere; }
+.item-notes { white-space: pre-wrap; color: var(--ink-soft); overflow-wrap: anywhere; }
+.history { display: grid; gap: var(--space-2); padding: 0; list-style: none; font-size: var(--text-sm); }
+.history li { padding-block: var(--space-2); border-bottom: 1px solid var(--rule-soft); overflow-wrap: anywhere; }
+.history time, .history .who { color: var(--ink-soft); }
+.panel td.wrap, .panel th.wrap { white-space: normal; }
+.mapping { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); margin-block: var(--space-3); }
+.mapping > div { display: grid; gap: var(--space-1); font-size: var(--text-sm); }
+.mapping label { font-weight: 700; }

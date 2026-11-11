@@ -1,4 +1,4 @@
-# Greenwich Credit Partners MVP v2.0
+# Greenwich Credit Partners MVP v2.1
 
 Server-backed demonstration of a small-business funding inquiry funnel.
 
@@ -178,3 +178,16 @@ Still required before live collection:
 - authorized CRM/funder agreements and integrations.
 
 See `docs/PRE_LAUNCH_CHECKLIST.md` and `docs/SECURITY_NOTES.md`.
+
+## ISO Partner Intelligence (v2.1)
+
+A second, parallel funnel for ISO / broker / referral-partner records. It shares the admin login, CSRF, audit log and security headers with the merchant funnel and nothing else: separate endpoint, tables, stages and scoring. See `VERSION_2_1_NOTES.md` for the full change list, API table and caveats.
+
+- Public demo form: `/partners.html` -> `POST /api/iso/applications` (built-in fictional organizations only).
+- Admin workspace: `/admin/iso.html` -> `/api/admin/iso/*` (session required; CSRF token on every POST).
+- CSV import with preview, row-level rejects, replay protection and a human duplicate-review queue. Sample file: `public/samples/iso-partners-sample.csv`.
+- Evidence-led vetting with separate *relationship stage* and *business verification* state.
+- Versioned, explainable A-D partner-priority score (`server/iso-scoring.mjs`). It is a ranking aid for reviewers. It is not a credit score and is never read by the merchant workflow.
+- Schema migrations: `server/migrations.mjs` (a v2.0 database upgrades in place).
+
+Not included, by design: scraping, enrichment, email or any outreach, bank data, funder submission, funding decisions.

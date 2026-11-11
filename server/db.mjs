@@ -3,6 +3,8 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 import { sampleLeads } from '../public/js/data/sample-leads.js';
+import { runMigrations, schemaVersion } from './migrations.mjs';
+import { createIsoStore } from './iso-store.mjs';
 
 const json = (value, fallback) => {
   if (value == null || value === '') return fallback;
@@ -85,61 +87,7 @@ export function openDatabase(path, { seed = false } = {}) {
   db.exec('PRAGMA journal_mode = WAL;');
   db.exec('PRAGMA foreign_keys = ON;');
   db.exec('PRAGMA busy_timeout = 5000;');
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS leads (
-      id TEXT PRIMARY KEY,
-      demo INTEGER NOT NULL CHECK (demo IN (0,1)),
-      contact_name TEXT NOT NULL,
-      business_name TEXT NOT NULL,
-      email TEXT NOT NULL,
-      phone TEXT NOT NULL,
-      industry TEXT NOT NULL,
-      state TEXT NOT NULL,
-      time_in_business TEXT NOT NULL,
-      monthly_revenue REAL,
-      amount_requested REAL,
-      use_of_funds TEXT NOT NULL,
-      use_of_funds_detail TEXT NOT NULL DEFAULT '',
-      has_existing_financing TEXT NOT NULL,
-      existing_financing_types_json TEXT NOT NULL DEFAULT '[]',
-      existing_financing_balance REAL,
-      demo_acknowledged INTEGER NOT NULL DEFAULT 0 CHECK (demo_acknowledged IN (0,1)),
-      stage TEXT NOT NULL,
-      follow_up_reason TEXT NOT NULL DEFAULT '',
-      source TEXT NOT NULL DEFAULT 'direct',
-      medium TEXT NOT NULL DEFAULT '',
-      campaign TEXT NOT NULL DEFAULT '',
-      received_at TEXT NOT NULL,
-      last_review_note TEXT NOT NULL DEFAULT '',
-      reviewed_at TEXT,
-      review_history_json TEXT NOT NULL DEFAULT '[]',
-      workflow_milestones_json TEXT NOT NULL DEFAULT '{}',
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_leads_received_at ON leads(received_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_leads_stage ON leads(stage);
-    CREATE INDEX IF NOT EXISTS idx_leads_source ON leads(source);
-
-    CREATE TABLE IF NOT EXISTS sessions (
-      token_hash TEXT PRIMARY KEY,
-      username TEXT NOT NULL,
-      csrf_token TEXT NOT NULL,
-      created_at INTEGER NOT NULL,
-      expires_at INTEGER NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
-
-    CREATE TABLE IF NOT EXISTS audit_log (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      actor TEXT NOT NULL,
-      action TEXT NOT NULL,
-      lead_id TEXT,
-      detail_json TEXT NOT NULL DEFAULT '{}',
-      at TEXT NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_audit_at ON audit_log(at DESC);
-  `);
+  runMigrations(db);
 
   const insertLead = db.prepare(`
     INSERT OR IGNORE INTO leads (
@@ -164,9 +112,13 @@ export function openDatabase(path, { seed = false } = {}) {
     }
   }
 
-  return {
+  const api = {
     raw: db,
-    close() { db.close(); },
+    close() {
+      // Fold the WAL back into the main file so a volume snapshot or redeploy sees one complete database.
+      try { db.exec('PRAGMA wal_checkpoint(TRUNCATE);'); } catch { /* best effort */ }
+      db.close();
+    },
     listLeads() {
       return db.prepare('SELECT * FROM leads ORDER BY received_at DESC, id DESC').all().map(fromDbLead);
     },
@@ -220,18 +172,28 @@ export function openDatabase(path, { seed = false } = {}) {
     deleteSession(tokenHash) {
       db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(tokenHash);
     },
-    audit({ actor, action, leadId = null, detail = {} }) {
-      db.prepare('INSERT INTO audit_log(actor,action,lead_id,detail_json,at) VALUES(?,?,?,?,?)')
-        .run(actor, action, leadId, JSON.stringify(detail), new Date().toISOString());
+    audit({ actor, action, leadId = null, isoOrgId = null, detail = {} }) {
+      db.prepare('INSERT INTO audit_log(actor,action,lead_id,iso_organization_id,detail_json,at) VALUES(?,?,?,?,?,?)')
+        .run(actor, action, leadId, isoOrgId, JSON.stringify(detail), new Date().toISOString());
     },
     listAudit(limit = 100) {
       const safe = Math.max(1, Math.min(500, Number(limit) || 100));
       return db.prepare('SELECT * FROM audit_log ORDER BY id DESC LIMIT ?').all(safe).map((row) => ({
-        id: row.id, actor: row.actor, action: row.action, leadId: row.lead_id,
+        id: row.id, actor: row.actor, action: row.action, leadId: row.lead_id, isoOrganizationId: row.iso_organization_id,
         detail: json(row.detail_json, {}), at: row.at,
       }));
     },
+    listAuditForIso(isoOrgId, limit = 200) {
+      return db.prepare('SELECT * FROM audit_log WHERE iso_organization_id = ? ORDER BY id DESC LIMIT ?').all(String(isoOrgId), Math.max(1, Math.min(500, Number(limit) || 200))).map((row) => ({
+        id: row.id, actor: row.actor, action: row.action, isoOrganizationId: row.iso_organization_id, detail: json(row.detail_json, {}), at: row.at,
+      }));
+    },
+    schemaVersion() { return schemaVersion(db); },
+    /** Cheap liveness probe for /healthz: proves the database file is readable. */
+    ping() { return Number(db.prepare('SELECT 1 AS ok').get().ok) === 1; },
   };
+  api.iso = createIsoStore(db, { audit: (entry) => api.audit(entry) });
+  return api;
 }
 
 export const hashSessionToken = (token) => createHash('sha256').update(token).digest('hex');

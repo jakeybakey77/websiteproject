@@ -5,6 +5,8 @@ import { evaluateLead } from '../public/js/lib/validation-engine.js';
 import { validationRules } from '../public/js/config/validation-rules.js';
 import { openDatabase } from './db.mjs';
 import { createLeadFromInquiry, validateInquiryPayload } from './inquiry.mjs';
+import { validateIsoApplication } from './iso-application.mjs';
+import { handleIsoAdmin } from './iso-routes.mjs';
 import {
   clearSessionCookie,
   destroySession,
@@ -46,14 +48,52 @@ export function createApp(options) {
   const db = options.db ?? openDatabase(cfg.dbPath, { seed: cfg.seedSampleLeads });
   const loginLimit = rateLimiter({ limit: 8, windowMs: 15 * 60 * 1000 });
   const inquiryLimit = rateLimiter({ limit: 40, windowMs: 10 * 60 * 1000 });
+  const isoApplicationLimit = rateLimiter({ limit: 40, windowMs: 10 * 60 * 1000 });
 
   async function handler(req, res) {
-    const url = new URL(req.url, 'http://localhost');
-    const path = decodeURIComponent(url.pathname);
+    // A malformed request target (for example a stray "%") must produce a 400, not an
+    // unhandled rejection that takes the whole process down.
+    let url;
+    let path;
+    try {
+      url = new URL(req.url, 'http://localhost');
+      path = decodeURIComponent(url.pathname);
+    } catch {
+      json(res, 400, { error: 'Malformed request URL.' });
+      return;
+    }
 
     try {
       if (req.method === 'GET' && path === '/healthz') {
-        json(res, 200, { ok: true, demoMode: cfg.demoMode });
+        let dbOk = false;
+        try { dbOk = db.ping(); } catch { dbOk = false; }
+        json(res, dbOk ? 200 : 503, { ok: dbOk, demoMode: cfg.demoMode });
+        return;
+      }
+
+      // Public ISO / referral-partner demo application. Separate endpoint, schema and
+      // tables from the merchant inquiry below; accepts built-in fictional partner
+      // identities only, and is closed (not opened to real data) when demo mode is off.
+      if (req.method === 'POST' && path === '/api/iso/applications') {
+        const rate = isoApplicationLimit(clientIp(req));
+        if (!rate.allowed) {
+          json(res, 429, { error: 'Too many demo submissions. Try again later.' }, { 'Retry-After': String(rate.retryAfter) });
+          return;
+        }
+        if (!cfg.demoMode) {
+          json(res, 503, { error: 'Live collection is disabled until compliance and security review is complete.' });
+          return;
+        }
+        const validated = validateIsoApplication(await readJson(req, cfg.maxBodyBytes));
+        const organization = db.iso.createFromApplication(validated);
+        // The applicant gets a receipt only: no score, tier or internal review state.
+        json(res, 201, {
+          reference: organization.id,
+          organizationName: organization.displayName,
+          receivedAt: organization.createdAt,
+          demo: true,
+          status: 'received_for_manual_review',
+        });
         return;
       }
 
@@ -134,6 +174,11 @@ export function createApp(options) {
           return;
         }
 
+        if (path === '/api/admin/iso' || path.startsWith('/api/admin/iso/')) {
+          await handleIsoAdmin({ req, res, path, url, session, db });
+          return;
+        }
+
         if (req.method === 'GET' && path === '/api/admin/leads') {
           json(res, 200, { leads: db.listLeads().map(withValidation) });
           return;
@@ -211,6 +256,11 @@ export function createApp(options) {
           if (!served) text(res, 404, 'Not found');
           return;
         }
+        if (normalizedAdminPath === '/admin/iso.html') {
+          const served = await serveStatic(res, publicRoot, '/admin/iso.html', { noStore: true });
+          if (!served) text(res, 404, 'Not found');
+          return;
+        }
         text(res, 404, 'Not found');
         return;
       }
@@ -245,8 +295,17 @@ export function createApp(options) {
         });
       });
     },
-    async close() {
-      if (server.listening) await new Promise((resolve) => server.close(resolve));
+    async close({ graceMs = 5000 } = {}) {
+      if (server.listening) {
+        await new Promise((resolve) => {
+          // Stop accepting, drop idle keep-alive sockets now, and cut anything still
+          // open after the grace period so SIGTERM always reaches db.close().
+          const force = setTimeout(() => server.closeAllConnections(), graceMs);
+          force.unref();
+          server.close(() => { clearTimeout(force); resolve(); });
+          server.closeIdleConnections();
+        });
+      }
       if (!options.db) db.close();
     },
   };

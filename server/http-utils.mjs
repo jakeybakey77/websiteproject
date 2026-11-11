@@ -42,15 +42,25 @@ export function redirect(res, location, status = 303) {
 
 export async function readJson(req, maxBytes = 64 * 1024) {
   let size = 0;
+  let tooLarge = false;
   const chunks = [];
+  // Past the limit, stop buffering but keep reading (up to a hard cap) so the client
+  // receives a clean 413 instead of a connection reset mid-upload.
+  const drainCap = maxBytes + 8 * 1024 * 1024;
   for await (const chunk of req) {
     size += chunk.length;
     if (size > maxBytes) {
-      const error = new Error('Request body too large.');
-      error.statusCode = 413;
-      throw error;
+      tooLarge = true;
+      chunks.length = 0;
+      if (size > drainCap) { req.destroy(); break; }
+      continue;
     }
     chunks.push(chunk);
+  }
+  if (tooLarge) {
+    const error = new Error('Request body too large.');
+    error.statusCode = 413;
+    throw error;
   }
   if (chunks.length === 0) return {};
   try {
