@@ -54,6 +54,10 @@
 
 Figma rendered each application workspace. Structural audit reported zero horizontal overflow. Remaining: ISO landing, ISO application, merchant admin, ISO CRM and supporting sign-in.
 
+### ISO partner landing — proposed `/partner-program.html`
+
+[Desktop 1440](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=9-986) · [Mobile 390](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=9-1074). Both screenshot-reviewed with zero horizontal overflow. Covers the audience, merchant/partner paths, evidence and human review, storage disclosure, and CTA to `/partners.html`. Remaining: ISO application, merchant admin, ISO CRM and supporting sign-in.
+
 ---
 
 ## A. YOUR JOB — EXECUTE, DON'T RE-PLAN
