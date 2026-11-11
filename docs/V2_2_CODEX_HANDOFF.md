@@ -34,6 +34,26 @@
 - Homepage `/`, `/index.html`: [Desktop 1440](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=6-7), [Mobile 390](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=6-128), [Mobile menu](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=6-247). Screenshot-reviewed both sizes and menu. Corrected FAQ toggle wrapping and rechecked both widths. Desktop and mobile retain merchant and ISO paths and the server-storage disclosure. UTM carry-over remains in the future implementation map.
 - Remaining: five screen types and supporting admin sign-in.
 
+### Merchant application — `/apply.html`
+
+[Merchant application section](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-119). Native 1440px and 390px frames preserve four steps, conditional financing fields, review and fictional contact restrictions.
+
+| State | Desktop | Mobile |
+|---|---|---|
+| Step 1 Business | [7:120](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-120) | [7:1050](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-1050) |
+| Step 2 Revenue | [7:205](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-205) | [7:1121](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-1121) |
+| Step 2 Error | [7:284](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-284) | [7:1186](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-1186) |
+| Step 3 No existing financing | [7:368](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-368) | [7:1256](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-1256) |
+| Step 3 Conditional fields | [7:438](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-438) | [7:1312](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-1312) |
+| Step 4 Fictional contact | [7:536](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-536) | [7:1396](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-1396) |
+| Review | [7:603](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-603) | [7:1449](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-1449) |
+| Submitting | [7:721](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-721) | [7:1553](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-1553) |
+| Submit failure | [7:839](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-839) | [7:1657](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-1657) |
+| Confirmation | [7:960](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-960) | [7:1764](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-1764) |
+| JavaScript disabled | [7:1009](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-1009) | [7:1807](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=7-1807) |
+
+Figma rendered each application workspace. Structural audit reported zero horizontal overflow. Remaining: ISO landing, ISO application, merchant admin, ISO CRM and supporting sign-in.
+
 ---
 
 ## A. YOUR JOB — EXECUTE, DON'T RE-PLAN
