@@ -58,6 +58,20 @@ Figma rendered each application workspace. Structural audit reported zero horizo
 
 [Desktop 1440](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=9-986) · [Mobile 390](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=9-1074). Both screenshot-reviewed with zero horizontal overflow. Covers the audience, merchant/partner paths, evidence and human review, storage disclosure, and CTA to `/partners.html`. Remaining: ISO application, merchant admin, ISO CRM and supporting sign-in.
 
+### ISO partner application — `/partners.html`
+
+[ISO partner application section](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=10-1051). Single-page form, read-only fictional profile from the five allowed organizations, native validation states and reference-only receipt.
+
+| State | Desktop | Mobile |
+|---|---|---|
+| Default | [10:1052](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=10-1052) | [10:1552](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=10-1552) |
+| Validation | [10:1159](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=10-1159) | [10:1653](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=10-1653) |
+| Submitting | [10:1273](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=10-1273) | [10:1761](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=10-1761) |
+| Submit failure | [10:1383](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=10-1383) | [10:1865](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=10-1865) |
+| Confirmation | [10:1496](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=10-1496) | [10:1972](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu?node-id=10-1972) |
+
+Visually checked representative desktop and mobile form/validation/receipt renders. Structural audit reported zero horizontal overflow across all ten frames. Remaining: merchant admin, ISO CRM, supporting sign-in and final verification.
+
 ---
 
 ## A. YOUR JOB — EXECUTE, DON'T RE-PLAN
