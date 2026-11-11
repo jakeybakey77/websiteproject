@@ -119,19 +119,29 @@ async function renderList() {
   const query = filterQuery();
   $('export-csv').href = api.exportUrl(query);
   const organizations = await api.listOrganizations(query);
-  $('org-rows').replaceChildren(...organizations.map((o) => el('tr', {},
-    el('td', { class: 'wrap business', text: o.displayName }),
-    el('td', { class: 'wide', text: o.domain || '—' }),
-    el('td', { text: o.region || '—' }),
-    el('td', {}, stageTag(o.stage)),
-    el('td', { class: 'wide' }, verificationTag(o.verificationStatus)),
-    el('td', {}, tierBadge(o.tier), o.tierOverridden && el('span', { class: 'tier-note', text: 'override' })),
-    el('td', { class: 'num', text: o.score ?? '—' }),
-    el('td', { class: 'wide', text: isoLabel(ACQUISITION_SOURCES, o.acquisitionSource) }),
-    el('td', { class: 'wide', text: o.assignedReviewer || 'Unassigned' }),
-    el('td', { class: 'wide', text: formatDate(o.updatedAt) }),
-    el('td', {}, el('a', { href: `#org=${encodeURIComponent(o.id)}`, text: 'Open', 'aria-label': `Open ${o.displayName}, ${o.id}` })),
-  )));
+  $('org-rows').replaceChildren(...organizations.map((o) => {
+    const href = `#org=${encodeURIComponent(o.id)}`;
+    return el('tr', {
+      class: 'iso-openable-row',
+      onclick: (event) => {
+        // Keep the name link's native navigation; clicks on the rest of the row open the same record.
+        if (event.target.closest('a, button, input, select, textarea')) return;
+        location.hash = href;
+      },
+    },
+      el('td', { class: 'wrap business' },
+        el('a', { class: 'iso-row-link', href, text: o.displayName, 'aria-label': `Open ${o.displayName}, ${o.id}` })),
+      el('td', { class: 'wide', text: o.domain || '—' }),
+      el('td', { text: o.region || '—' }),
+      el('td', {}, stageTag(o.stage)),
+      el('td', { class: 'wide' }, verificationTag(o.verificationStatus)),
+      el('td', {}, tierBadge(o.tier), o.tierOverridden && el('span', { class: 'tier-note', text: 'override' })),
+      el('td', { class: 'num', text: o.score ?? '—' }),
+      el('td', { class: 'wide', text: isoLabel(ACQUISITION_SOURCES, o.acquisitionSource) }),
+      el('td', { class: 'wide', text: o.assignedReviewer || 'Unassigned' }),
+      el('td', { class: 'wide', text: formatDate(o.updatedAt) }),
+    );
+  }));
   const filtered = Object.keys(query).some((key) => !['sort', 'dir'].includes(key));
   $('result-count').textContent = `${organizations.length} organization${organizations.length === 1 ? '' : 's'}${filtered ? ' match these filters' : ''}.`;
   const empty = $('empty');
