@@ -86,6 +86,15 @@ Visually checked representative desktop and mobile form/validation/receipt rende
 
 Desktop overview, filtered view and detail, and mobile overview and detail screenshot-reviewed. Structural audit reported zero horizontal overflow. Remaining: ISO CRM, supporting sign-in and final QA.
 
+### Paused at the Starter-plan Figma MCP limit
+
+- **Completed canvas work:** design-system foundations and 29 local component families (10 component sets and 19 standalone components, including the two Button sets), plus 47 native screen/state frames across the homepage, merchant application, ISO partner landing, ISO partner application and merchant admin. See the IDs above and resume in file `9NMvRWv48ixyvhT5kuRUJu`. No replacement file was created.
+- **Blocker:** `use_figma` rejected the first ISO CRM build request: “You've reached the Figma MCP tool call limit on the Starter plan.” Team `1702436162824164275`. No ISO CRM node IDs were returned. Before retrying, inventory page `2:3` for a section named **06 ISO CRM** to rule out partial creation. Resume when the connected team's MCP quota is available. Figma also provided a [team upgrade link](https://www.figma.com/files/team/1702436162824164275/all-projects?upgrade=mcp_rate_limit_paywall).
+- **Remaining design:** Build ISO CRM `/admin/iso.html` at 1440px and 390px. Create organization list, overview/master-detail, verification (four states and nine evidence categories), score (25/20/20/15/10/10 weights, actual rule codes, rationale and override history), evidence review, fictional contacts, manual activities and follow-ups, CSV upload, mapping/preview, result/replay and duplicate resolution. Use the existing design-system page assets. Review the supporting `/admin/login.html` design with the same shell.
+- **Remaining QA:** View the unreviewed merchant intake, ISO intake and merchant admin state renders, then visually review every ISO CRM and sign-in frame. The existing five screen sections passed structural horizontal-overflow checks. For merchant admin, adjust the narrow State and Received table headings and make the filtered-list sample rows match the active filter. Confirm keyboard focus and dialog behavior in the implementation handoff. Optional tablet frames are pending.
+- **Decisions for approval:** Provisional Source Serif 4 display face, public demo dashboard link retained in the footer, merchant review in a desktop side panel/mobile sheet, and merchant row clicks backed by the business-name control. All screen states are editable Figma frames. Prototype links between screens have not been wired.
+- **Scope:** Only this handoff and the design brief were updated on `feat/v2.2-figma-redesign`. No app, database, API, Railway or deployment work. No application tests run. Request design approval only after the sixth screen and QA are complete.
+
 ---
 
 ## A. YOUR JOB — EXECUTE, DON'T RE-PLAN
