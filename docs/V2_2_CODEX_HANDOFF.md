@@ -1,3 +1,117 @@
+# GREENWICH CREDIT PARTNERS — v2.2
+# MASTER CODEX → FIGMA CONTINUATION DIRECTIVE
+
+**Execution mode:** Continue the existing, partially initialized Figma Design file. **Create editable designs now**; do not stop at planning, coding mockups, or writing more specifications.
+
+**Project:** Greenwich Credit Partners — premium, institutional small-business financing **demonstration prototype**. Preserve this brand.
+**Repository:** [jakeybakey77/websiteproject](https://github.com/jakeybakey77/websiteproject)
+**Working branch:** `feat/v2.2-figma-redesign` — never commit work to the default branch, `-Copy` branch, or an unrelated branch.
+**Existing Figma file:** [Greenwich Credit Partners — v2.2 Redesign](https://www.figma.com/design/9NMvRWv48ixyvhT5kuRUJu)
+**Figma file key:** `9NMvRWv48ixyvhT5kuRUJu`
+**Authoritative source order:** (1) actual v2.1 code on the named branch, (2) `VERSION_2_1_NOTES.md`, (3) `docs/V2_2_DESIGN_BRIEF.md`, (4) historical checkpoint preserved below. When documents conflict with source, source wins for existing behavior; approved v2.2 decisions govern *proposed visual design and copy*. Read the sources rather than relying on chat history or an old ZIP.
+
+> **Handoff verification, 2026-11-11:** The GitHub repository, correct branch, design brief, and earlier checkpoint were fetched. This Figma file was opened through metadata reads: `00 Design system (0:1)`, `01 Public screens (2:2)`, and `02 Admin screens (2:3)` are present and each page has **zero canvas elements**. The earlier checkpoint reports 44 variables, 18 text styles, and 4 effect styles; these assets are *reported by the prior design session*, not independently re-counted in this handoff. Verify them before use. This handoff is a documentation update **only**; it does not implement Figma screens or change the deployed site.
+
+---
+
+## A. YOUR JOB — EXECUTE, DON'T RE-PLAN
+
+1. Load the actual repo and work on `feat/v2.2-figma-redesign`. Read the two existing notes and the relevant v2.1 frontend files before creating the corresponding screens. Preserve all current workflows and real labels.
+2. Connect the **same** Figma account and gain access to the **existing** Design file with key `9NMvRWv48ixyvhT5kuRUJu`. Verify tool **write** capability, not merely screenshot/context/read access. Confirm the three pages; read local collection `GCP Tokens` and style inventory before adding anything.
+3. **Do not create another Figma file** unless the owner explicitly authorizes replacing the existing file. **Do not recreate tokens/styles** whose identities and values already exist. Continue from the exact pages/nodes below, and keep the existing variables intact.
+4. Build actual **editable Figma native components, variant sets, auto-layout frames and instances**, then compose **all six screen types in desktop 1440px and mobile 390px**. Add tablet 834px variants where practical after the desktop/mobile priority is met. Use sections inside the three existing pages; page-count constraints must not trigger new files.
+5. Take screenshots or equivalent visual inspections after each composed screen and correct clipping, alignment, truncation, inaccessible contrast and poor responsive layouts. Validate key copy and state variants against source; record real Figma frame/node IDs.
+6. Keep updating this document with a **completed/remaining checklist, frame links/IDs and blockers** as work progresses; commit **documentation only** on the correct branch. If the run is interrupted, the next Codex or Claude session must be able to continue **without duplicating created nodes**.
+7. Once all six screen types have reviewable desktop and mobile designs, share the Figma file URL, inventory of components/tokens, screen-to-route map, UX changes versus unchanged functionality, outstanding decisions, and QA evidence. **Stop and request design approval. Do not implement the frontend.**
+
+**Nonnegotiable boundaries:** No changes to `public/`, `server/`, `scripts/`, `tests/`, `data/`, APIs, SQLite, business logic, auth, scoring, validation, demo identity restrictions, environment configuration, migrations, Railway, or deployment. No React/Next.js migration. No paid assets without approval. No real merchant data. No real funding/approvals/commissions, claims of being an operational lender or brokerage, manufactured testimonials, funding volumes, rates, terms, or eligibility claims. Do not submit real leads.
+
+**Failure policy:** If Codex lacks Figma write access, *stop design writes* and report the exact permission/tool blocker and the next user action. A read-only MCP, PNG, diagram, HTML mockup, design plan, or generated code **is not an acceptable substitute** for native editable Figma screens. Do not imply a screen is finished until its frame exists in the named Figma file.
+
+## B. STARTUP CHECKS — RUN FIRST
+
+- `git status --short`; `git branch --show-current`; `git fetch origin`; check out `feat/v2.2-figma-redesign` and `git pull --ff-only` when safe. Avoid resetting or discarding uncommitted work. Record `git rev-parse HEAD`.
+- Open `docs/V2_2_DESIGN_BRIEF.md` and `VERSION_2_1_NOTES.md`. The design brief's opening text saying that no Figma file exists is **obsolete**; correct it in a documentation-only commit after independently verifying the file.
+- Read `public/styles/tokens.css`; `public/index.html`, `public/apply.html`, `public/partners.html`, `public/admin/index.html`, `public/admin/iso.html`, `public/admin/login.html`; `public/js/config/form-schema.js`; `public/js/pages/{landing,apply,partners,dashboard,iso-admin}.js`; the relevant existing CSS and pipeline/scoring enums. Inspect code paths to capture dynamic labels, validation, tables and states rather than guessing from the HTML shells.
+- Authenticate the Figma MCP that exposes **writing/editing** of Figma Design documents (via Figma Plugin API or equivalent) for file `9NMvRWv48ixyvhT5kuRUJu`. If only read tools exist, treat it as blocked. Check that you can access and use the exact existing file, not merely a different draft.
+- Read Figma pages `0:1`, `2:2`, `2:3`; ensure they are still empty before any first build, otherwise inventory what's already been created. Inventory existing `GCP Tokens`, 18 text styles, 4 effects, and any pre-existing components. Record asset IDs. **Never blindly run node-creation twice.**
+- First actual write should create a meaningful, reusable foundation/component on `00 Design system`, not a throwaway test, then read it back to prove the editing API works. Ensure it is editable, auto-layout based, and token-bound before proceeding.
+
+## C. FIGMA FILE LAYOUT — REUSE THESE PAGES
+
+| Existing page | Node ID | What to create inside it |
+|---|---|---|
+| `00 Design system` | `0:1` | Foundation swatches/specimens, local component sets and documented interaction/validation variants |
+| `01 Public screens` | `2:2` | Homepage, merchant application, ISO partner landing page, ISO partner application: desktop and mobile sections |
+| `02 Admin screens` | `2:3` | Admin dashboard, ISO CRM: desktop and mobile sections; consider admin login consistency |
+
+Use naming like `01 Homepage / Desktop 1440 / Default`, `01 Homepage / Mobile 390 / Default`, `02 Merchant / Desktop 1440 / Step 2 Error`, `05 Admin / Desktop 1440 / Inquiry Detail`, `06 ISO CRM / Mobile 390 / Verification`. Keep logically separate screen variants and states as actual reviewable frames. Ensure design components are local main components and screens are made using instances; do not flatten to images or detach components by default.
+
+## D. BUILD ORDER AND REQUIRED FRAME COVERAGE
+
+**Milestone 1 — component foundations**
+- Color/typography/spacing/radius/width specimens sourced from existing `GCP Tokens`. Use Source Serif 4 (display), Inter (body/UI), and IBM Plex Mono (reference codes) as already established in this Figma draft; the serif direction is **provisional and requires design approval**, not an approved brand redefinition.
+- Component sets: public header + mobile menu, admin nav/sidebar/top bar, footer, persistent demo strip, skip link, button variants (primary/secondary/quiet/on-dark, size/state), input/select/currency/textarea/counter, radio/checkbox and groups, inline error and error summary, stepper/progress, fictional identity card, review and confirmation blocks, FAQ, KPI card, pipeline bar, table header/row/cells, filter/search and chips, stage/verification/tier/evidence badges, tabs, checklist row, score-factor meter, modal/side panel, activity timeline, import stepper and callouts.
+- Make focus, hover, disabled, error and selected states visibly distinct. Reuse instances in screens, use variable-bound colors/space/radius where supported, apply text styles, and use accessible text contrast.
+
+**Milestone 2 — Homepage (highest priority)**
+- `/` and `/index.html`. Desktop 1440 and mobile 390. Public hero, dual CTAs **Get Business Funding** → `/apply.html` and **Become an ISO Partner** → proposed partner-program route, simple 3-step process, financing purposes/categories (not actual product offers), partner recruitment, FAQ, footer, demo disclosure, mobile nav. Preserve UTM carry-over intent in the implementation map. No claim of lending decisions, funding guarantees or approval outcomes.
+
+**Milestone 3 — Merchant application**
+- `/apply.html`. Desktop/mobile frames for default steps, validation/error-summary state, review, submitting/failure if relevant, confirmation. **Existing flow is already 4 steps + review + confirmation**; do not invent new form fields or rewrite validation. Use current industry/state/business-age, revenue/request/use/details, existing financing, *read-only fictional contact + required demo acknowledgment* and review content. Preserve conditional controls and navigation.
+
+**Milestone 4 — ISO partner landing**
+- New *proposed* design route `/partner-program.html` (not an existing v2.1 route; **do not implement it yet**). Who it is for, merchant vs referral partner distinction, human-review/verification workflow, permissible benefits, demo caveat, CTA to existing `/partners.html`. No invented commissions or promises.
+
+**Milestone 5 — ISO partner application**
+- `/partners.html`. Desktop/mobile input, validation and confirmation states. Preserve one-page behavior unless approved otherwise; fictional organization read-only identity selector, relationship type, primary region, specialization(s), monthly referral range, years active, required demo acknowledgment. Respect exact five-identity server restriction.
+
+**Milestone 6 — Merchant admin dashboard**
+- `/admin/`. Desktop/mobile KPI, six-stage pipeline, sources, preliminary review flags, filters, synthetic lead table and record detail dialog/sheet, audit/review workflow. **Design clickable merchant table rows** with the same detail action as the small existing Open control; retain a real keyboard-focusable link/button with visible focus. Stage changes remain constrained; needs-info and closed reasons still required. This is a design proposal only—not a JS code change.
+
+**Milestone 7 — ISO CRM**
+- `/admin/iso.html`. Desktop/mobile list, filters, 11-stage relationship pipeline, tier A–D plus Not scored, organization detail, four verification states, evidence checklist (9 categories), six-factor score (25/20/20/15/10/10), override rationale/history, fictional contacts, manual follow-ups, activities, CSV import preview/mapping, duplicates review. Preserve the caveat **“ranking aid, not a credit score”**, and that manual status and activities send no outreach. The list already has organization-link/row navigation; do not mischaracterize it.
+
+**Cross-screen:** Include `/admin/login.html` in the shell consistency pass as a supporting design, but it is not a seventh required screen type. Every public screen retains the demo strip and a clear prototype disclosure. Include the real fact that synthetic demo submissions **are stored server-side**. Never reuse stale “Demo v1.1” copy.
+
+## E. DESIGN & ACCESSIBILITY REQUIREMENTS
+
+- Institutional-finance aesthetic: navy/white/paper surfaces, restrained blue, generous hierarchy, minimal clutter, strong dual conversion paths, modern SaaS administrative tables.
+- **Already-created collection:** `GCP Tokens` (25 color + 19 numeric variables, Light mode). No second collection. Existing text styles 18, effect styles 4. Existing file palette: `#14293B` navy, `#0F3048` navy deep, `#147AA8` blue, `#0E547D` darker blue, `#2BB3CC` sky (decorative only on white), `#E5F5F9` pale, `#F7FBFD` paper, `#FFFFFF` sheet, `#536B7F` secondary text, `#DCE7EE` rule. Check actual variables for canonical names/values before binding.
+- Mobile 390; desktop 1440; optional tablet 834. Content width 1200. Responsive behavior should be modeled with auto layout, appropriate hug/fill rules, tables adapted for narrow screens, and no overflow. Screens must be readable at zoom.
+- AA contrast for normal text and meaningful focus indicators; 44px-ish touch targets where feasible; real label/hint/error relationships in the proposed implementation notes; accessible dialog and table row navigation. Measure unverified status/control-border contrast before approval.
+- Figma API caution: load fonts before editing text; switch pages asynchronously and only within valid file context; inspect existing assets first; return created node IDs from write calls; use safe retries and verify actual canvas output instead of assuming success. Prefer a few complete, retry-safe construction operations over redundant tool calls.
+- Screens must show representative **synthetic** content from the repository; no personal contact information or real merchant records.
+
+## F. ACCEPTANCE CRITERIA — DO NOT MARK COMPLETE EARLY
+
+- [ ] Verified **write** connection to existing Figma file, with no duplicate file
+- [ ] Existing `GCP Tokens` and styles inventoried and reused
+- [ ] Foundations and actual reusable Figma component/variant library created
+- [ ] Homepage desktop + mobile exist, visually checked
+- [ ] Merchant intake desktop + mobile, relevant error/review/confirmation states exist
+- [ ] ISO partner landing desktop + mobile exist
+- [ ] ISO partner application desktop + mobile exist
+- [ ] Admin dashboard desktop + mobile, lead detail, filters and clickable-row interaction design exist
+- [ ] ISO CRM desktop + mobile, partner detail/score/verification/import/duplicate states exist
+- [ ] Every frame visually reviewed for clipped/overlapping content and responsive behavior
+- [ ] Complete screen-to-route mapping and unchanged-functionality list documented
+- [ ] Frame names/node IDs/Figma URLs and QA results entered into handoff
+- [ ] `git diff --name-only` shows documentation changes only; no Railway interaction
+- [ ] Stop for design approval; **no application code implementation**
+
+**Final report format:** Figma file URL; branch and head SHA; completed frame checklist with names and deep links; token/component inventory; copy/UX proposals; unchanged app behavior; unresolved design decisions; actual visual QA; tests run or not run; explicit statement that v2.1 production code/deployment remains unchanged.
+
+### Interruption/resume protocol
+
+After each meaningful milestone: (a) save in the same Figma file, (b) read back created node IDs/names, (c) note completed and remaining screens here, (d) commit the **handoff documentation only**. On restart, check for existing nodes first and **continue, not regenerate**. Never claim a file created merely from a returned plan. If Figma tool quotas or Codex limits are reached, preserve the current Figma frames and checkpoint exact remaining tasks; stop cleanly.
+
+---
+
+## G. ORIGINAL CLAUDE CHECKPOINT (PRESERVED AS REFERENCE)
+
+The following is the full original 2026-11-11 Claude/Fable handoff. It documents precise tokens, styles, source audit, and remaining detailed requirements. Its status is a **point-in-time snapshot**, not a new request to create another Figma file.
+
 # v2.2 Figma redesign — continuation handoff
 
 Checkpoint written 2026-11-11, when the Figma build session was interrupted early.
