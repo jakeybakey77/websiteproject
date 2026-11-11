@@ -132,6 +132,10 @@ First screenshot pass reviewed both lists, desktop master-detail and score, and 
 - Visual QA: reviewed previously outstanding and new desktop/mobile states, including login failure and password focus, ISO evidence and verification, score/history, import preview and duplicate review. Corrected long mobile field values, narrowed desktop table gaps to fit State and Received labels, filtered the merchant sample list to In review, added public-site and sign-out links in the mobile admin shell, and verified the corrected layouts. Final audits found zero horizontal-overflow findings across 37 public and 38 admin frames. The main prototype paths were verified from stored Figma reactions. Live keyboard order, modal focus management and screen-reader output remain implementation checks.
 - For design approval: Source Serif 4 remains provisional. Other proposals are the public dashboard link, desktop inquiry side panel/mobile sheet and clickable merchant table rows. The new partner program route is a design proposal. Business and ISO rules, authentication, APIs, synthetic identities, SQLite and deployment stay as implemented. This continuation changed only `docs/V2_2_CODEX_HANDOFF.md`. No application tests ran. Frontend work is gated on design approval.
 
+### Design approval — 2026-11-11
+
+The owner approved the v2.2 Figma designs in the continuation chat, including the Source Serif 4 display direction and the merchant detail panel and mobile sheet presented for review. Approval covers the design. Application implementation and deployment require a separate request.
+
 ---
 
 ## A. YOUR JOB — EXECUTE, DON'T RE-PLAN
