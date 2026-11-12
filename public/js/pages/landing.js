@@ -1,11 +1,6 @@
-// Preserve campaign attribution across the two public intake paths.
-if (location.search) {
-  for (const link of document.querySelectorAll('a[data-carry-query]')) {
-    const destination = new URL(link.href);
-    destination.search = location.search;
-    link.href = destination.href;
-  }
-}
+import { updateCampaignLinks } from '../lib/referral-query.js';
+
+updateCampaignLinks(new URLSearchParams(location.search));
 
 for (const menu of document.querySelectorAll('.mobile-menu')) {
   menu.addEventListener('click', (event) => {

@@ -64,3 +64,8 @@
   .progress li span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .inquiry, .confirmation { border: 0; background: transparent; padding: 0; }
 }
+
+.referral-banner { margin-bottom: 1rem; padding: .875rem 1rem; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--pale-blue); color: var(--ledger-dark); }
+.referral-banner.is-error { background: var(--error-tint); color: var(--error); }
+.referral-banner button { margin-top: .5rem; }
+.referral-recorded { color: var(--success); background: var(--success-tint); border-radius: 6px; padding: .4rem .75rem; font-weight: 600; }

@@ -11,6 +11,7 @@ import {
 } from '../config/iso-pipeline.js';
 import { el } from '../lib/dom.js';
 import { formatDate } from '../lib/format.js';
+import { createReferralsPanel } from './iso-referrals.js';
 import * as api from '../services/iso-service.js';
 
 const $ = (id) => document.getElementById(id);
@@ -97,6 +98,12 @@ async function renderAnalytics() {
     stat('Duplicates awaiting review', a.imports.duplicateReviewPending),
     stat('Open follow-ups', a.followUps.open),
   );
+  const referrals = a.referrals;
+  $('referral-analytics').replaceChildren(
+    stat('Referred inquiries', referrals.referredInquiries),
+    stat('Direct / unattributed inquiries', referrals.directOrUnattributedInquiries),
+    stat('Partners credited', referrals.organizationsWithCredit),
+    stat('Active demo referral links', referrals.activeReferralCodes));
   renderBars('stage-bars', ISO_STAGES.map((s) => [s.label, a.byStage[s.value] ?? 0]));
   renderBars('tier-bars', [...ISO_TIERS.map((t) => [`Tier ${t}`, a.byTier[t] ?? 0]), ['Not scored', a.byTier.unscored ?? 0]]);
   renderBars('source-bars', ACQUISITION_SOURCES.map((s) => [s.label, a.bySource[s.value] ?? 0]));
@@ -459,6 +466,8 @@ const ACTIVITY_LABELS = {
   contact_added: 'Contact added', contact_status_changed: 'Contact status changed', evidence_added: 'Evidence added', evidence_reviewed: 'Evidence reviewed',
   score_recalculated: 'Score recalculated', score_override: 'Tier overridden', score_override_cleared: 'Tier override cleared', duplicate_review: 'Duplicate review decision',
   note: 'Note', follow_up: 'Follow-up task',
+  referral_code_issued: 'Demo referral link issued', referral_code_revoked: 'Demo referral link revoked',
+  referral_code_rotated: 'Demo referral link rotated',
 };
 function activitySummary(a) {
   const d = a.detail ?? {};
@@ -513,7 +522,8 @@ function masterList(selected) {
       href: '#org=' + encodeURIComponent(record.id),
       'aria-current': record.id === selected.id ? 'true' : null,
     }, el('strong', { text: record.displayName }), el('small', { text: record.domain || record.id }),
-    el('small', { text: isoLabel(ISO_STAGES, record.stage) + ' · ' + (record.tier ? 'Tier ' + record.tier : 'Not scored') })))));
+    el('small', {}, isoLabel(ISO_STAGES, record.stage),
+      el('span', { class: 'master-tier', text: ' · ' + (record.tier ? 'Tier ' + record.tier : 'Not scored') }))))));
     if (!list.childElementCount) list.append(el('li', { class: 'empty', text: 'No organizations match your search.' }));
   }
   search.addEventListener('input', update);
@@ -528,11 +538,13 @@ function renderDetail() {
   const o = d.organization;
   const app = o.application ?? {};
   document.title = `${o.displayName} | ISO partners (demo)`;
+  const tier = el('span', { class: 'detail-tier' }, 'Tier ', tierBadge(o.tier),
+    o.tierOverridden && tag('warn', 'Tier manually overridden'));
   const title = el('div', { class: 'detail-head' },
       el('a', { class: 'back-link', href: '#', text: '← All ISO partners' }),
       el('h1', { id: 'detail-title', tabindex: '-1', text: o.displayName }),
       el('div', { class: 'detail-tags' }, el('code', { text: o.id }), stageTag(o.stage), verificationTag(o.verificationStatus),
-        el('span', {}, 'Tier ', tierBadge(o.tier)), o.tierOverridden && tag('warn', 'Tier manually overridden'), tag('muted', 'Synthetic record')));
+        tier, tag('muted', 'Synthetic record')));
   const duplicates = d.possibleDuplicates.length > 0 && el('div', { class: 'callout', id: 'duplicate-warning' },
       el('strong', { text: 'Possible duplicate records. ' }), 'These were not merged. Compare them and disqualify or archive one if they are the same organization.',
       el('ul', {}, d.possibleDuplicates.map((p) => el('li', {}, el('a', { href: `#org=${encodeURIComponent(p.organizationId)}`, text: p.displayName }),
@@ -549,6 +561,7 @@ function renderDetail() {
           app.referralVolume && pair('Stated monthly referrals', `${isoLabel(REFERRAL_VOLUME_BANDS, app.referralVolume)} (self-reported)`),
           app.yearsActive && pair('Stated time active', `${isoLabel(YEARS_ACTIVE_BANDS, app.yearsActive)} (self-reported)`),
           pair('Created', dateTime(o.createdAt)), pair('Last updated', dateTime(o.updatedAt))));
+  const referrals = createReferralsPanel(o.id);
   const sections = [
     ['overview', 'Overview', profile, workflowPanel(d)],
     ['verification', 'Verification', verificationPanel(d)],
@@ -556,6 +569,7 @@ function renderDetail() {
     ['evidence', 'Evidence', evidencePanel(d)],
     ['contacts', 'Contacts', contactsPanel(d)],
     ['activity', 'Activity', activityPanel(d)],
+    ['referrals', 'Referrals', referrals.panel],
   ];
   const controls = el('div', { class: 'detail-tabs', role: 'group', 'aria-label': 'Organization details' });
   const panels = sections.map(([key, label, ...content]) =>
@@ -571,6 +585,9 @@ function renderDetail() {
       buttons[index].setAttribute('aria-pressed', String(selected));
       panels[index].hidden = !selected;
     });
+    tier.hidden = activeSection === 'referrals';
+    detailView.classList.toggle('showing-referrals', tier.hidden);
+    if (activeSection === 'referrals') referrals.refresh();
   }
   selectSection();
   controls.append(...buttons);

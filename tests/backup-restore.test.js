@@ -13,10 +13,12 @@ import { rehearse } from '../scripts/rehearse-migration.mjs';
 const tempDir = (t) => { const dir = mkdtempSync(join(tmpdir(), 'gcp-backup-test-')); t.after(() => rmSync(dir, { recursive: true, force: true })); return dir; };
 
 test('a backup taken while the database is open and writing is complete and verified', (t) => {
-  const dir = tempDir(t);
+  const dir = mkdtempSync(join(tmpdir(), 'gcp-backup-test-'));
   const source = join(dir, 'live.sqlite');
   const db = openDatabase(source, { seed: true });
-  t.after(() => { try { db.close(); } catch { /* closed */ } });
+  t.after(() => {
+    try { db.close(); } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
   db.audit({ actor: 'reviewer', action: 'written_just_before_backup' });
   // Everything so far may still sit in the write-ahead log, which a plain file copy would miss.
   const report = backupDatabase(source, join(dir, 'backup.sqlite'));

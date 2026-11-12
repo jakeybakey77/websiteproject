@@ -33,7 +33,7 @@ export async function logout() {
 export const exportUrl = (query) => `${ISO}/export.csv?${new URLSearchParams(query)}`;
 export const listOrganizations = async (query) => (await request(`${ISO}/organizations?${new URLSearchParams(query)}`)).organizations;
 export const getOrganization = (orgId) => request(`${ISO}/organizations/${id(orgId)}`);
-export const getAnalytics = async () => (await request(`${ISO}/analytics`)).analytics;
+export const getAnalytics = async (query = {}) => (await request(`${ISO}/analytics?${new URLSearchParams(query)}`)).analytics;
 export const getImports = () => request(`${ISO}/imports`);
 export const previewImport = async (payload) => (await post('/imports/preview', payload)).preview;
 export const commitImport = (payload) => post('/imports', payload);
@@ -44,3 +44,9 @@ export const orgAction = (orgId, action, payload) => post(`/organizations/${id(o
 export const reviewEvidence = (evidenceId, payload) => post(`/evidence/${id(evidenceId)}/review`, payload);
 export const setContactStatus = (contactId, status) => post(`/contacts/${id(contactId)}/status`, { status });
 export const completeFollowUp = (activityId) => post(`/activities/${id(activityId)}/complete`);
+
+export const getReferralCodes = (orgId) => request(`${ISO}/organizations/${id(orgId)}/referral-codes`);
+export const issueReferralCode = (orgId) => post(`/organizations/${id(orgId)}/referral-codes`);
+export const rotateReferralCode = (orgId, reason) => post(`/organizations/${id(orgId)}/referral-codes/rotate`, { reason });
+export const revokeReferralCode = (codeId, reason) => post(`/referral-codes/${id(codeId)}/revoke`, { reason });
+export const getPartnerReferrals = (orgId, query) => request(`${ISO}/organizations/${id(orgId)}/referrals?${new URLSearchParams(query)}`);

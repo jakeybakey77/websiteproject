@@ -176,7 +176,7 @@ test('production start-up fails closed on missing, weak or placeholder secrets',
   // Run from an empty directory so no local .env file can supply values.
   const tempCwd = mkdtempSync(join(tmpdir(), 'gcp-cfg-'));
   try {
-    const importPath = JSON.stringify(join(root, 'server/config.mjs'));
+    const importPath = JSON.stringify(new URL('../server/config.mjs', import.meta.url).href);
     const exec = (env) => spawnSync(process.execPath, ['--input-type=module', '-e', `await import(${importPath}); console.log('started')`],
       { cwd: tempCwd, env: { PATH: process.env.PATH, NODE_ENV: 'production', ...env }, encoding: 'utf8' });
     const strong = { ADMIN_PASSWORD: 'a-long-unique-demo-passphrase', SESSION_SECRET: 'k'.repeat(48) };
@@ -223,8 +223,13 @@ test('real process: honours PORT, serves /healthz, shuts down cleanly on SIGTERM
   const stop = async (proc) => {
     proc.child.kill('SIGTERM');
     const result = await Promise.race([proc.exited, new Promise((resolve) => setTimeout(() => resolve({ code: 'timeout' }), 8000))]);
-    assert.deepEqual(result, { code: 0, signal: null }, proc.output());
-    assert.match(proc.output(), /Shutdown complete/);
+    if (process.platform === 'win32') {
+      // Windows terminates the child directly. The restart below still verifies WAL recovery.
+      assert.deepEqual(result, { code: null, signal: 'SIGTERM' }, proc.output());
+    } else {
+      assert.deepEqual(result, { code: 0, signal: null }, proc.output());
+      assert.match(proc.output(), /Shutdown complete/);
+    }
   };
 
   const first = await boot();
@@ -237,7 +242,9 @@ test('real process: honours PORT, serves /healthz, shuts down cleanly on SIGTERM
   const lead = await merchant.json();
   await stop(first);
   // After a clean shutdown the WAL has been folded into the main database file.
-  assert.ok(!readdirSync(join(dir, 'data')).some((name) => name.endsWith('-wal')), 'no WAL file left behind');
+  if (process.platform !== 'win32') {
+    assert.ok(!readdirSync(join(dir, 'data')).some((name) => name.endsWith('-wal')), 'no WAL file left behind');
+  }
 
   const second = await boot();
   t.after(() => second.child.kill('SIGKILL'));

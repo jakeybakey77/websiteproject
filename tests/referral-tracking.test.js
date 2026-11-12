@@ -450,7 +450,11 @@ test('an invalid, unknown, revoked, repeated or malformed code is refused with n
 
 test('a replayed submission returns the original receipt and creates nothing; a changed replay is a conflict', async (t) => {
   const first = await start(t, { cleanup: false });
-  t.after(() => rmSync(first.dir, { recursive: true, force: true }));
+  let second;
+  t.after(async () => {
+    await second?.close();
+    rmSync(first.dir, { recursive: true, force: true });
+  });
   const { base } = first;
   const admin = await login(base);
   const id = await onboard(admin, base);
@@ -509,7 +513,7 @@ test('a replayed submission returns the original receipt and creates nothing; a 
   // Restart: the key, the lead and the history are all still there.
   const finalCounts = tableCounts(first.app.db);
   await first.close();
-  const second = await start(t, { dir: first.dir });
+  second = await start(t, { dir: first.dir, cleanup: false });
   assert.deepEqual(tableCounts(second.app.db), finalCounts);
   const afterRestart = await submit(second.base, payload);
   assert.equal(afterRestart.status, 200);
@@ -811,7 +815,7 @@ test('real process: a referred inquiry survives SIGTERM and its retry still retu
   };
   const stop = async (proc) => {
     proc.child.kill('SIGTERM');
-    assert.deepEqual(await Promise.race([proc.exited, new Promise((resolve) => setTimeout(() => resolve({ code: 'timeout' }), 8000))]), { code: 0, signal: null }, proc.output());
+    assert.deepEqual(await Promise.race([proc.exited, new Promise((resolve) => setTimeout(() => resolve({ code: 'timeout' }), 8000))]), process.platform === 'win32' ? { code: null, signal: 'SIGTERM' } : { code: 0, signal: null }, proc.output());
   };
 
   const first = await boot();

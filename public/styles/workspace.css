@@ -116,3 +116,18 @@
 @media (min-width: 56rem) {
   .iso-detail-layout [aria-labelledby='profile-title'] .ledger { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+.record-list th { overflow-wrap: normal; }
+.showing-referrals .master-tier { display: none; }
+#referral-sort { font-weight: 600; text-align: left; }
+#referral-sort-mobile { display: none; }
+.lead-referral-panel { padding-block: .5rem 1rem; border-block: 1px solid var(--rule); }
+.lead-referral-panel h4 { margin-bottom: .5rem; }
+.referral-data .table-scroll { max-width: 100%; }
+.referral-data input[readonly] { width: 100%; min-width: 0; padding: .75rem; border: 1px solid var(--control); border-radius: 6px; font: inherit; }
+.referral-data .detail-tags { margin-block: .75rem; }
+.referral-data .notice { margin-top: .75rem; }
+@media (max-width: 47rem) {
+  #referral-sort-mobile { display: inline-flex; }
+  .record-list .referral-cell { grid-column: 1 / -1; }
+}
