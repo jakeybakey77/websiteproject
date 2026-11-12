@@ -1,44 +1,36 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Admin sign in | Greenwich Credit Partners</title>
-    <meta name="robots" content="noindex, nofollow" />
-    <meta name="theme-color" content="#14293b" />
-    <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="../styles/tokens.css" />
-    <link rel="stylesheet" href="../styles/base.css" />
-    <link rel="stylesheet" href="../styles/login.css" />
-    <script type="module" src="../js/pages/admin-login.js"></script>
-  </head>
-  <body>
-    <a class="skip-link" href="#main">Skip to main content</a>
-    <header class="site-header">
-      <div class="container">
-        <a class="brand" href="../index.html">Greenwich Credit Partners</a>
-        <a href="../index.html">Public site</a>
-      </div>
-    </header>
-    <main id="main" class="container login-page">
-      <section class="sheet login-card" aria-labelledby="login-title">
-        <p class="eyebrow">Internal access</p>
-        <h1 id="login-title">Admin sign in</h1>
-        <p class="step-intro">This dashboard is restricted to authorized reviewers. The current build stores synthetic demo inquiries only.</p>
-        <form id="login-form" class="login-form">
-          <div>
-            <label for="username">Username</label>
-            <input id="username" name="username" autocomplete="username" required />
-          </div>
-          <div>
-            <label for="password">Password</label>
-            <input id="password" name="password" type="password" autocomplete="current-password" required />
-          </div>
-          <button id="login-submit" class="button" type="submit">Sign in</button>
-        </form>
-        <p id="login-status" class="status" role="status" aria-live="polite"></p>
-        <p class="fine">Do not enter or store real merchant information in this demo environment.</p>
-      </section>
-    </main>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#14293b">
+  <title>Admin sign in | Greenwich Credit Partners</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/styles/tokens.css">
+  <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/apply.css">
+  <link rel="stylesheet" href="/styles/login.css">
+  <script type="module" src="/js/pages/admin-login.js"></script>
+</head>
+<body class="login-shell">
+<a class="skip-link" href="#main">Skip to main content</a>
+<div class="demo-strip" role="note"><div class="container">Demonstration prototype. Use fictional information only. Synthetic submissions are stored on the demo server.</div></div>
+<header class="site-header login-header"><div class="container"><a class="brand" href="/" aria-label="Greenwich Credit Partners home"><span>Greenwich<small>Credit Partners</small></span></a><a class="button button-light" href="/">Public site ↗</a></div></header>
+<main id="main" class="container login-page">
+  <section class="sheet login-card" aria-labelledby="login-title">
+    <p class="eyebrow">Internal access</p>
+    <h1 id="login-title">Admin sign in</h1>
+    <p class="step-intro">This dashboard is restricted to authorized reviewers. The current build stores synthetic demo inquiries only.</p>
+    <p id="login-status" class="status" role="status" aria-live="polite"></p>
+    <form id="login-form" class="login-form">
+      <div><label for="username">Username</label><input id="username" name="username" autocomplete="username" placeholder="Enter username" required></div>
+      <div><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter password" required></div>
+      <button id="login-submit" class="button" type="submit">Sign in</button>
+    </form>
+    <p class="fine">Do not enter or store real merchant information in this demo environment.</p>
+  </section>
+</main>
+
+</body>
 </html>

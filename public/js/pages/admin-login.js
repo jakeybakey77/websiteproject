@@ -5,6 +5,8 @@ const submit = document.getElementById('login-submit');
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   submit.disabled = true;
+  submit.textContent = 'Signing in…';
+  status.classList.remove('is-error');
   status.textContent = 'Signing in…';
   const data = new FormData(form);
   try {
@@ -19,6 +21,8 @@ form.addEventListener('submit', async (event) => {
     location.replace('/admin/');
   } catch (error) {
     status.textContent = error.message;
+    status.classList.add('is-error');
+    submit.textContent = 'Sign in';
     submit.disabled = false;
     document.getElementById('password').focus();
   }

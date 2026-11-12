@@ -47,6 +47,7 @@ function renderProgress() {
             class: index < state.index ? 'is-done' : index === state.index ? 'is-current' : '',
             'aria-current': index === state.index && 'step',
           },
+          el('span', { class: 'step-number', 'aria-hidden': 'true', text: index < state.index ? '✓' : String(index + 1) }),
           el('span', { text: name }),
         ),
       ),
@@ -89,9 +90,14 @@ function renderField(name) {
       ),
     ];
   } else if (field.type === 'textarea') {
+    const counter = el('p', { class: 'character-count', text: `${(value ?? '').length} / ${field.maxLength}` });
     content = [
       el('label', { for: name, text: field.label }),
-      el('textarea', { id: name, name, rows: 3, maxlength: field.maxLength, 'aria-describedby': describedBy, text: value ?? '' }),
+      el('textarea', {
+        id: name, name, rows: 3, maxlength: field.maxLength, 'aria-describedby': describedBy, text: value ?? '',
+        oninput: ({ target }) => { counter.textContent = `${target.value.length} / ${field.maxLength}`; },
+      }),
+      counter,
     ];
   } else if (field.type === 'checkbox') {
     content = el(
@@ -349,3 +355,4 @@ function showConfirmation(lead) {
 }
 
 render({ moveFocus: false });
+form.hidden = false;

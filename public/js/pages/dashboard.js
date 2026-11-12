@@ -25,6 +25,13 @@ const resultCount = document.getElementById('result-count');
 const empty = document.getElementById('empty');
 const dialog = document.getElementById('lead-dialog');
 const reviewStatus = document.getElementById('review-status');
+let dialogLeadId = null;
+
+dialog.addEventListener('close', () => {
+  const trigger = [...rows.querySelectorAll('.inquiry-name')].find((button) => button.dataset.leadId === dialogLeadId);
+  (trigger ?? filters.querySelector('input')).focus();
+  dialogLeadId = null;
+});
 
 const tag = (kind, label) => el('span', { class: `tag tag-${kind}`, text: label });
 const stageTag = (lead) => tag(lead.stage, labelFor(STAGES, lead.stage));
@@ -52,6 +59,14 @@ function renderBars(listId, options, key) {
     ? countBy(leads.map((lead) => ({source: sourceBucket(lead.source)})), 'source')
     : countBy(leads, key);
   const largest = Math.max(1, ...Object.values(counts));
+  if (key === 'stage') {
+    document.getElementById('stage-segments').replaceChildren(...options.flatMap(({ value }) => {
+      if (!counts[value]) return [];
+      const segment = el('span', { class: 'stage-' + value });
+      segment.style.flexGrow = counts[value];
+      return [segment];
+    }));
+  }
   document.getElementById(listId).replaceChildren(
     ...options.map(({ value, label }) => {
       const count = counts[value] ?? 0;
@@ -110,24 +125,42 @@ function renderInsights() {
 function renderRows() {
   const criteria = Object.fromEntries(new FormData(filters));
   const visible = filterLeads(leads, criteria);
+  document.getElementById('active-filters').replaceChildren(...Object.entries(criteria)
+    .filter(([, value]) => value.trim())
+    .map(([key, value]) => {
+      const control = filters.elements.namedItem(key);
+      const label = control.labels[0].textContent;
+      const display = control.selectedOptions?.[0]?.textContent ?? value;
+      return el('button', { type: 'button', text: `${label}: ${display} ×`, 'aria-label': `Clear ${label} filter`, onclick: () => {
+        control.value = '';
+        renderRows();
+        control.focus();
+      } });
+    }));
 
   rows.replaceChildren(
     ...visible.map((lead) =>
       el(
         'tr',
-        {},
-        el('td', { text: lead.id }),
-        el('td', { class: 'wrap business', text: lead.businessName }),
-        el('td', { class: 'wrap wide', text: labelFor(INDUSTRIES, lead.industry) }),
-        el('td', { text: lead.state }),
-        el('td', { class: 'num', text: formatCurrency(lead.amountRequested) }),
-        el('td', { class: 'num wide', text: formatCurrency(lead.monthlyRevenue) }),
-        el('td', {}, stageTag(lead)),
-        el('td', { class: 'wide' }, validationTag(lead)),
-        el('td', { class: 'screening-reasons wide', text: lead.validation.flags.map((flag) => flag.ruleId).join(', ') || '—' }),
-        el('td', { text: sourceLabel(lead.source) }),
-        el('td', { class: 'wide', text: formatDate(lead.receivedAt) }),
-        el('td', {}, el('button', {
+        { class: 'inquiry-row', role: 'row', onclick: (event) => {
+          if (!event.target.closest('button, a, input, select, textarea')) openLead(lead);
+        } },
+        el('td', { role: 'cell', text: lead.id }),
+        el('td', { role: 'cell', class: 'wrap business' }, el('button', {
+          type: 'button', class: 'link-button inquiry-name', text: lead.businessName,
+          'data-lead-id': lead.id, 'aria-label': `View ${lead.businessName}, ${lead.id}`,
+          onclick: () => openLead(lead),
+        })),
+        el('td', { role: 'cell', class: 'wrap wide', text: labelFor(INDUSTRIES, lead.industry) }),
+        el('td', { role: 'cell', text: lead.state }),
+        el('td', { role: 'cell', class: 'num', text: formatCurrency(lead.amountRequested) }),
+        el('td', { role: 'cell', class: 'num wide', text: formatCurrency(lead.monthlyRevenue) }),
+        el('td', { role: 'cell',}, stageTag(lead)),
+        el('td', { role: 'cell', class: 'wide' }, validationTag(lead)),
+        el('td', { role: 'cell', class: 'screening-reasons wide', text: lead.validation.flags.map((flag) => flag.ruleId).join(', ') || '—' }),
+        el('td', { role: 'cell', text: sourceLabel(lead.source) }),
+        el('td', { role: 'cell', class: 'wide', text: formatDate(lead.receivedAt) }),
+        el('td', { role: 'cell',}, el('button', {
           type: 'button',
           class: 'link-button',
           text: 'View',
@@ -226,7 +259,7 @@ function openLead(lead) {
       el('div', {},
         el('h2', { id: 'dialog-title', text: lead.businessName }),
         el('p', { text: `${lead.id}, received ${formatDate(lead.receivedAt)}. Synthetic demo data.` })),
-      el('button', { type: 'button', class: 'button button-quiet button-small', text: 'Close', onclick: () => dialog.close() }),
+      el('button', { type: 'button', class: 'button button-quiet button-small', text: 'Close ×', autofocus: true, onclick: () => dialog.close() }),
     ),
 
     el('h3', { text: 'Status' }),
@@ -262,6 +295,7 @@ function openLead(lead) {
     el('dl', { class: 'ledger' },
       row('Name', lead.contactName), row('Email', lead.email), row('Phone', lead.phone)),
   );
+  dialogLeadId = lead.id;
   dialog.showModal();
 }
 
