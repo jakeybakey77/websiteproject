@@ -4,7 +4,9 @@ Synthetic demo data only. Not implemented, by design: real merchant or ISO data,
 
 **Scope of this change:** the backend half of the v2.3 specification (migration, services, APIs, tests). The visible UI — referral banner on `/apply.html`, "Referred by" in the merchant admin, the Referrals tab in the ISO admin — is Gate B and is intentionally **not** included, so it can be built from the approved v2.2 design system without competing edits. No existing page, stylesheet or page script was changed.
 
-**Baseline:** branched from `e7ce67b` (tip of `claude/compassionate-fermi-uk97tm`: v2.1 `9a0b5ed` plus three ISO-table UI commits). The v2.2 Figma branches add documents only on top of that same commit. 101/101 tests passed on the baseline before any change.
+**Integrated baseline:** the deployed v2.2 redesign (`12d2977`, tip of `claude/compassionate-fermi-uk97tm`) is merged in with a merge commit. No file was changed on both sides: the v2.2 frontend is exactly as published, and the only server change it brought is the `.woff2` MIME type. The exact UI contract for Gate B is in `docs/V2_3_GATE_B_CODEX_CONTRACT.md`.
+
+**Original baseline:** branched from `e7ce67b` (tip of `claude/compassionate-fermi-uk97tm`: v2.1 `9a0b5ed` plus three ISO-table UI commits). The v2.2 Figma branches add documents only on top of that same commit. 101/101 tests passed on the baseline before any change.
 
 ## Rule that governs everything
 
@@ -23,7 +25,25 @@ Migrations 1 and 2 are untouched. No column was added to `leads`.
 
 Database-level guards (hold even if the service layer is bypassed): a code can only be inserted active for an eligible partner; the only permitted update is active -> revoked; codes are never deleted; credit can only be inserted or reassigned to an eligible partner, and only through a live code owned by that partner; events cannot be updated or deleted; a human correction must carry a reason; and an `AFTER UPDATE OF stage` trigger revokes any still-active code when a partner leaves `active_partner`.
 
-**Before deploying:** back up the SQLite file (after a clean shutdown, or including the `-wal` file), rehearse the restore, and run this migration against a copy first. The v2.1 binary refuses to start on a v3 database, so rolling back means restoring the backup, not just redeploying the old image.
+**Before deploying (Gate C — not done, needs separate authorization):**
+
+1. Take a consistent backup of the live file. Do not copy `gcp.sqlite` by hand while the server runs: recent writes live in `gcp.sqlite-wal` and a plain copy can miss them.
+
+   ```bash
+   npm run db:backup -- /data/gcp.sqlite /data/backups/gcp-pre-v2.3.sqlite
+   ```
+
+   This reads one snapshot (`VACUUM INTO`), never writes to the source, refuses to overwrite an existing file, and re-opens the backup to run integrity and foreign-key checks before reporting its row counts and SHA-256.
+2. Rehearse on copies of that backup:
+
+   ```bash
+   npm run db:rehearse -- /data/backups/gcp-pre-v2.3.sqlite
+   ```
+
+   It migrates one copy and proves every pre-existing row is unchanged, then restores a second copy and proves it is byte-identical and still schema v2. Exit code 0 only if all 12 checks pass.
+3. Keep the backup off the volume as well. The v2.1/v2.2 binary refuses to start on a v3 database, so rolling back means stopping the app and restoring the backup file, not just redeploying the old image.
+
+**Rehearsal already run (local copy, not production data):** a database was created by running the deployed baseline code (`12d2977`) and driving it over HTTP (23 inquiries, 3 partners, one taken to active + verified, reviews and audit rows). It was backed up while that server was running, with the data still in the WAL. All 12 rehearsal checks passed. In addition: the baseline app refused to start on the migrated copy; the baseline app started normally on the restored copy with all 23 inquiries and 3 partners; and this branch started on the migrated copy, issued a link to the pre-existing active partner and recorded a referred inquiry. The production database has not been read, backed up or migrated.
 
 ## Codes
 
@@ -66,16 +86,16 @@ Counts of stored rows only, computed in SQL, by **current effective credit** and
 
 ## Files
 
-New: `server/referral-store.mjs`, `server/tx.mjs`, `public/js/lib/referral-code.js`, `tests/referral-tracking.test.js`.
+New: `server/referral-store.mjs`, `server/tx.mjs`, `public/js/lib/referral-code.js`, `scripts/backup-db.mjs`, `scripts/rehearse-migration.mjs`, `tests/referral-tracking.test.js`, `tests/backup-restore.test.js`, `docs/V2_3_GATE_B_CODEX_CONTRACT.md`.
 Changed: `server/migrations.mjs` (migration 3 appended), `server/db.mjs`, `server/app.mjs`, `server/inquiry.mjs`, `server/iso-routes.mjs`, `server/iso-store.mjs` (shared transaction helper, stage-change hook, timeline helper), `server/config.mjs`, `package.json`, `.env.example`, `tests/iso-migrations-and-hardening.test.js` (schema version 2 -> 3 expectations only).
 
 ## Verification
 
-`npm test`: 118 passing (the 101 existing tests plus 17 new). `npm run check`: clean. The new suite covers the §12.9 matrix except the two UI rows: migration 2 -> 3 on a populated v2.1 database, rollback, repeat startup, old binary refusing the new schema; every ineligible stage refused; issue/rotate/revoke; stage-linked revocation and its rollback; direct vs referred; UTM independence; malformed/unknown/revoked/array codes with no partial rows; replay, conflict, replay after revocation, restart, real-process SIGTERM + retry; corrections and immutability; concurrent retries, issuance and rotation; 401/403 on every new route; no code value in logs or audit; analytics.
+`npm test` on the merged branch: 120 passing (the 101 existing tests plus 19 new). `npm run check`: clean. The new suite covers the §12.9 matrix except the two UI rows: migration 2 -> 3 on a populated v2.1 database, rollback, repeat startup, old binary refusing the new schema; every ineligible stage refused; issue/rotate/revoke; stage-linked revocation and its rollback; direct vs referred; UTM independence; malformed/unknown/revoked/array codes with no partial rows; replay, conflict, replay after revocation, restart, real-process SIGTERM + retry; corrections and immutability; concurrent retries, issuance and rotation; 401/403 on every new route; no code value in logs or audit; analytics.
 
 ## Open items
 
-1. **Gate B (UI) is not built.** Until then a referral link works only if the `ref` value is sent as `referralCode` by the client; the shipped `/apply.html` does not read `ref` yet, so opening a referral link today produces a direct inquiry. `landing.js` still forwards the raw query string. `readReferralParam()` in `public/js/lib/referral-code.js` is ready for that work.
+1. **Gate B (UI) is not built.** Until then a referral link works only if the `ref` value is sent as `referralCode` by the client; the shipped `/apply.html` does not read `ref` yet, so opening a referral link today produces a direct inquiry. `landing.js` (v2.2) forwards the whole query string to every carried link, so a `ref` value also reaches the partner pages, where it is ignored. `readReferralParam()` in `public/js/lib/referral-code.js` is ready for that work.
 2. **Rate limiting still trusts the first `X-Forwarded-For` value** (pre-existing, documented in v2.1). Must be fixed before any public launch.
 3. **A link proves nothing about a real referral agreement.** Anyone holding it can attribute a demo inquiry. Do not hang compensation, data sharing or privileged treatment on it.
 4. Proposed defaults in the spec that were implemented as written and still await owner confirmation: issuance is a manual admin action; rotation requires a reason; corrections may only target a currently eligible partner; codes do not expire on a timer.
