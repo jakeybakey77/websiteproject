@@ -3,16 +3,17 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Inquiries | Greenwich Credit Partners internal dashboard (demo)</title>
+    <title>Internal dashboard | Greenwich Credit Partners demo</title>
     <meta name="robots" content="noindex, nofollow" />
     <meta name="theme-color" content="#14293b" />
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="../styles/tokens.css" />
     <link rel="stylesheet" href="../styles/base.css" />
     <link rel="stylesheet" href="../styles/dashboard.css" />
+    <link rel="stylesheet" href="/styles/workspace.css" />
     <script type="module" src="../js/pages/dashboard.js"></script>
   </head>
-  <body>
+  <body class="admin-shell">
     <a class="skip-link" href="#main">Skip to main content</a>
 
     <!-- Authenticated demo dashboard. Real-data production use still requires MFA/SSO,
@@ -23,24 +24,24 @@
       </div>
     </div>
 
-    <header class="site-header">
+    <header class="site-header admin-header">
       <div class="container">
-        <a class="brand" href="./">Greenwich Credit Partners <small>Internal dashboard</small></a>
+        <a class="brand" href="./" aria-label="Greenwich Credit Partners home"><span>Greenwich<small>Credit Partners</small></span></a>
         <nav class="admin-nav" aria-label="Workspace"><a href="./" aria-current="page">Merchant inquiries</a><a href="iso.html">ISO partners</a></nav>
         <span class="admin-session">Signed in as <strong id="admin-user">reviewer</strong></span>
-        <button id="logout" type="button" class="button button-quiet button-small">Sign out</button>
-        <a href="../index.html">Public site</a>
+        <div class="admin-session-links"><a href="/">Public site ↗</a><button id="logout" type="button" class="link-button">Sign out</button></div>
       </div>
     </header>
 
     <main id="main" class="container dashboard">
-      <h1>Inquiries</h1>
+      <div class="dashboard-title"><div><h1>Merchant inquiries</h1><p>Review fictional inquiries and track the internal handoff workflow.</p></div><span class="tag tag-new">Authenticated prototype</span></div>
 
       <dl id="stats" class="stats"></dl>
 
       <div class="panels">
         <section class="sheet panel" aria-labelledby="stage-title">
           <h2 id="stage-title">Current stages <span class="note">(synthetic snapshot)</span></h2>
+          <div id="stage-segments" class="stage-segments" aria-hidden="true"></div>
           <ul id="stage-bars" class="bars"></ul>
         </section>
         <section class="sheet panel" aria-labelledby="source-title">
@@ -48,32 +49,6 @@
           <ul id="source-bars" class="bars"></ul>
         </section>
       </div>
-
-      <section class="sheet panel" aria-labelledby="screening-title">
-        <h2 id="screening-title">Preliminary screening insights <span class="note">(fictional records)</span></h2>
-        <p class="result-count">These are missing-information and clarification checks, not credit decisions or lender eligibility scores. Results reflect synthetic data only.</p>
-        <dl id="screening-stats" class="insight-stats"></dl>
-        <div class="insight-grid">
-          <div>
-            <h3>Most common review flags</h3>
-            <ul id="reason-list" class="reason-list"></ul>
-          </div>
-          <div>
-            <h3>Screening by source</h3>
-            <div class="table-scroll">
-              <table class="source-table"><thead><tr><th scope="col">Source</th><th scope="col" class="num">Inquiries</th><th scope="col" class="num">Ready for review</th><th scope="col" class="num">Follow-up</th></tr></thead>
-                <tbody id="source-quality"></tbody></table>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="sheet panel" aria-labelledby="funnel-title">
-        <h2 id="funnel-title">Funnel instrumentation <span class="note">(demo activity only)</span></h2>
-        <p class="result-count">Logged milestones count reviewer actions in this tab (ever reached), while current-stage counts describe fictional snapshot records. Initial seeded stages are never inferred as historical conversions.</p>
-        <dl id="workflow-stats" class="insight-stats"></dl>
-        <p class="dialog-note"><strong>Not yet measurable:</strong> merchant contact rate, completed applications, approvals, funded merchants, cost per funded merchant. These need consented, authorized partner and campaign data; we will not invent them.</p>
-      </section>
 
       <section class="sheet panel" aria-labelledby="list-title">
         <h2 id="list-title">All inquiries</h2>
@@ -101,35 +76,64 @@
             <select id="reason" name="reason"><option value="">All review flags</option></select>
           </div>
           <button type="reset" class="button button-quiet button-small">Clear filters</button>
-          <button type="button" id="export-csv" class="button button-small">Export filtered demo CSV</button>
+          <button type="button" id="export-csv" class="button button-secondary button-small">Export filtered demo CSV</button>
         </form>
 
+        <div id="active-filters" class="active-filters" aria-label="Active filters"></div>
         <p id="review-status" class="result-count" role="status" aria-live="polite"></p>
         <p id="result-count" class="result-count" role="status"></p>
 
-        <div class="table-scroll" role="region" aria-labelledby="list-title" tabindex="0">
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Reference</th>
-                <th scope="col">Business <span class="note">(fictional)</span></th>
-                <th scope="col" class="wide">Industry</th>
-                <th scope="col">State</th>
-                <th scope="col" class="num">Requested</th>
-                <th scope="col" class="num wide">Monthly revenue</th>
-                <th scope="col">Stage</th>
-                <th scope="col" class="wide">Validation</th>
-                <th scope="col" class="wide">Reason codes</th>
-                <th scope="col">Source</th>
-                <th scope="col" class="wide">Received</th>
-                <th scope="col"><span class="visually-hidden">Details</span></th>
+        <div class="table-scroll record-list" role="region" aria-labelledby="list-title" tabindex="0">
+          <table role="table">
+            <thead role="rowgroup">
+              <tr role="row">
+                <th role="columnheader" scope="col">Reference</th>
+                <th role="columnheader" scope="col">Business <span class="note">(fictional)</span></th>
+                <th role="columnheader" scope="col" class="wide">Industry</th>
+                <th role="columnheader" scope="col">State</th>
+                <th role="columnheader" scope="col" class="num">Requested</th>
+                <th role="columnheader" scope="col" class="num wide">Monthly revenue</th>
+                <th role="columnheader" scope="col">Stage</th>
+                <th role="columnheader" scope="col" class="wide">Validation</th>
+                <th role="columnheader" scope="col" class="wide">Reason codes</th>
+                <th role="columnheader" scope="col">Source</th>
+                <th role="columnheader" scope="col" class="wide">Received</th>
+                <th role="columnheader" scope="col"><span class="visually-hidden">Details</span></th>
               </tr>
             </thead>
-            <tbody id="lead-rows"></tbody>
+            <tbody role="rowgroup" id="lead-rows"></tbody>
           </table>
         </div>
         <p id="empty" class="empty" hidden>No inquiries match these filters. Clear the filters to see all of them.</p>
       </section>
+
+      <section class="sheet panel" aria-labelledby="screening-title">
+        <h2 id="screening-title">Preliminary screening insights <span class="note">(fictional records)</span></h2>
+        <p class="result-count">These are missing-information and clarification checks, not credit decisions or lender eligibility scores. Results reflect synthetic data only.</p>
+        <dl id="screening-stats" class="insight-stats"></dl>
+        <div class="insight-grid">
+          <div>
+            <h3>Most common review flags</h3>
+            <ul id="reason-list" class="reason-list"></ul>
+          </div>
+          <div>
+            <h3>Screening by source</h3>
+            <div class="table-scroll">
+              <table class="source-table"><thead><tr><th scope="col">Source</th><th scope="col" class="num">Inquiries</th><th scope="col" class="num">Ready for review</th><th scope="col" class="num">Follow-up</th></tr></thead>
+                <tbody id="source-quality"></tbody></table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sheet panel" aria-labelledby="funnel-title">
+        <h2 id="funnel-title">Funnel instrumentation <span class="note">(demo activity only)</span></h2>
+        <p class="result-count">Logged milestones count reviewer actions in this tab (ever reached), while current-stage counts describe fictional snapshot records. Initial seeded stages are never inferred as historical conversions.</p>
+        <dl id="workflow-stats" class="insight-stats"></dl>
+        <p class="dialog-note"><strong>Not yet measurable:</strong> merchant contact rate, completed applications, approvals, funded merchants, cost per funded merchant. These need consented, authorized partner and campaign data; we will not invent them.</p>
+      </section>
+
+
     </main>
 
     <dialog id="lead-dialog" class="lead-dialog" aria-labelledby="dialog-title"></dialog>

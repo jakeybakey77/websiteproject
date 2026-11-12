@@ -21,6 +21,9 @@ const filters = $('filters');
 
 let session = null;
 let current = null; // organization detail currently shown
+let organizations = null;
+let activeSection = 'overview';
+let organizationSearch = '';
 
 const tag = (kind, label) => el('span', { class: `tag tag-${kind}`, text: label });
 const stageTag = (stage) => tag(stage, isoLabel(ISO_STAGES, stage));
@@ -118,28 +121,28 @@ const filterQuery = () => {
 async function renderList() {
   const query = filterQuery();
   $('export-csv').href = api.exportUrl(query);
-  const organizations = await api.listOrganizations(query);
+  organizations = await api.listOrganizations(query);
   $('org-rows').replaceChildren(...organizations.map((o) => {
     const href = `#org=${encodeURIComponent(o.id)}`;
     return el('tr', {
-      class: 'iso-openable-row',
+      class: 'iso-openable-row', role: 'row',
       onclick: (event) => {
         // Keep the name link's native navigation; clicks on the rest of the row open the same record.
         if (event.target.closest('a, button, input, select, textarea')) return;
         location.hash = href;
       },
     },
-      el('td', { class: 'wrap business' },
+      el('td', { role: 'cell', class: 'wrap business' },
         el('a', { class: 'iso-row-link', href, text: o.displayName, 'aria-label': `Open ${o.displayName}, ${o.id}` })),
-      el('td', { class: 'wide', text: o.domain || '—' }),
-      el('td', { text: o.region || '—' }),
-      el('td', {}, stageTag(o.stage)),
-      el('td', { class: 'wide' }, verificationTag(o.verificationStatus)),
-      el('td', {}, tierBadge(o.tier), o.tierOverridden && el('span', { class: 'tier-note', text: 'override' })),
-      el('td', { class: 'num', text: o.score ?? '—' }),
-      el('td', { class: 'wide', text: isoLabel(ACQUISITION_SOURCES, o.acquisitionSource) }),
-      el('td', { class: 'wide', text: o.assignedReviewer || 'Unassigned' }),
-      el('td', { class: 'wide', text: formatDate(o.updatedAt) }),
+      el('td', { role: 'cell', class: 'wide', text: o.domain || '—' }),
+      el('td', { role: 'cell', text: o.region || '—' }),
+      el('td', { role: 'cell',}, stageTag(o.stage)),
+      el('td', { role: 'cell', class: 'wide' }, verificationTag(o.verificationStatus)),
+      el('td', { role: 'cell',}, tierBadge(o.tier), o.tierOverridden && el('span', { class: 'tier-note', text: 'override' })),
+      el('td', { role: 'cell', class: 'num', text: o.score ?? '—' }),
+      el('td', { role: 'cell', class: 'wide', text: isoLabel(ACQUISITION_SOURCES, o.acquisitionSource) }),
+      el('td', { role: 'cell', class: 'wide', text: o.assignedReviewer || 'Unassigned' }),
+      el('td', { role: 'cell', class: 'wide', text: formatDate(o.updatedAt) }),
     );
   }));
   const filtered = Object.keys(query).some((key) => !['sort', 'dir'].includes(key));
@@ -167,6 +170,8 @@ const MATCH_LABELS = { exact_domain: 'same domain', exact_name: 'same name', nea
 
 function renderPreview(preview) {
   const status = $('import-status');
+  $('import-step').textContent = '2 of 3 · Preview and mapping';
+  $('import-form').hidden = true;
   const s = preview.summary;
   const mappingSelects = preview.fields.map((f) => {
     const select = el('select', { id: `map-${f.field}`, 'data-field': f.field }, el('option', { value: '', text: f.required ? 'Choose a column' : 'Not in file' }),
@@ -189,6 +194,8 @@ function renderPreview(preview) {
       pendingUpload = null;
       $('import-preview').replaceChildren();
       $('import-form').reset();
+      $('import-form').hidden = false;
+      $('import-step').textContent = '3 of 3 · Result';
       await Promise.all([renderAnalytics(), renderList(), renderImports()]);
     } catch (error) {
       status.textContent = error.message;
@@ -211,13 +218,23 @@ function renderPreview(preview) {
           : r.match ? `Matches ${r.match.displayName ?? 'an earlier row'} (${MATCH_LABELS[r.match.matchType]}${r.match.rowNumber ? `, row ${r.match.rowNumber}` : ''}).` : '' }),
       ))))),
     preview.rows.length < s.totalRows && el('p', { class: 'result-count', text: `Showing the first ${preview.rows.length} of ${s.totalRows} rows.` }),
-    el('div', { class: 'mini-form' }, el('div', { class: 'actions' }, commit)),
+    el('div', { class: 'mini-form' }, el('div', { class: 'actions' },
+      el('button', { type: 'button', class: 'button button-secondary button-small', text: 'Back to upload', onclick: () => {
+        pendingUpload = null;
+        $('import-preview').replaceChildren();
+        $('import-form').hidden = false;
+        $('import-step').textContent = '1 of 3 · Upload';
+        status.textContent = '';
+        $('import-file').focus();
+      } }), commit)),
   );
   status.textContent = 'Preview only. Nothing has been saved yet.';
 }
 
 async function runPreview(mapping) {
-  renderPreview(await api.previewImport({ ...pendingUpload, ...(mapping ? { mapping } : {}) }));
+  const upload = pendingUpload;
+  const preview = await api.previewImport({ ...upload, ...(mapping ? { mapping } : {}) });
+  if (pendingUpload === upload) renderPreview(preview);
 }
 
 async function renderImports() {
@@ -257,7 +274,13 @@ async function renderImports() {
 // Detail view ------------------------------------------------------------------
 
 /** Runs a reviewer action that returns the refreshed detail, then re-renders. */
-const act = (promise) => promise.then((detail) => { current = detail; renderDetail(); });
+const act = async (promise) => {
+  const detail = await promise;
+  if (current?.organization.id !== detail.organization.id || detailView.hidden) return;
+  current = detail;
+  renderDetail();
+  detailView.querySelector('[aria-pressed="true"]').focus();
+};
 
 function workflowPanel(d) {
   const o = d.organization;
@@ -272,15 +295,6 @@ function workflowPanel(d) {
     onSubmit: (values) => act(api.orgAction(o.id, 'stage', values)),
     note: 'Stages are relationship records kept by reviewers. This workspace sends no email or messages; “Contacted” only records something done outside the system.',
   });
-  const verificationForm = miniForm({
-    submitLabel: 'Update verification',
-    fields: [
-      { name: 'status', label: 'Business verification', type: 'select', options: VERIFICATION_STATUSES.filter((s) => s.value !== o.verificationStatus), placeholder: 'Choose state' },
-      { name: 'note', label: 'What was checked', type: 'textarea', span: true, placeholder: 'Required for verified or failed' },
-    ],
-    onSubmit: (values) => act(api.orgAction(o.id, 'verification', values)),
-    note: '“Verified” needs at least one independently confirmed identity item and no confirmed red flag. It is a reviewer’s conclusion, not something the score can grant.',
-  });
   const mine = o.assignedReviewer === session.username;
   return el('section', { class: 'sheet panel', 'aria-labelledby': 'workflow-title' },
     el('h2', { id: 'workflow-title', text: 'Review workflow' }),
@@ -293,8 +307,32 @@ function workflowPanel(d) {
       el('button', { type: 'button', class: 'button button-quiet button-small', id: 'assign-toggle', text: mine ? 'Unassign me' : 'Assign to me',
         onclick: () => act(api.orgAction(o.id, 'assign', { reviewer: mine ? '' : session.username })).catch((error) => { pageStatus.textContent = error.message; }) }))),
     stageOptions.length ? stageForm : el('p', { class: 'dialog-note', text: 'No further stage changes are available from this stage.' }),
-    verificationForm,
   );
+}
+
+function verificationPanel(d) {
+  const o = d.organization;
+  const form = miniForm({
+    submitLabel: 'Update verification',
+    fields: [
+      { name: 'status', label: 'Business verification', type: 'select', options: VERIFICATION_STATUSES.filter((s) => s.value !== o.verificationStatus), placeholder: 'Choose state' },
+      { name: 'note', label: 'What was checked', type: 'textarea', span: true, placeholder: 'Required for verified or failed' },
+    ],
+    onSubmit: (values) => act(api.orgAction(o.id, 'verification', values)),
+    note: '“Verified” needs at least one independently confirmed identity item and no confirmed red flag. It is a reviewer’s conclusion, not something the score can grant.',
+  });
+  const categories = EVIDENCE_CATEGORIES.map((item) => {
+    const records = d.evidence.filter((entry) => entry.category === item.value);
+    return el('li', {}, el('strong', { text: item.label }),
+      records.length ? records.map((entry) => tag(entry.status, isoLabel(EVIDENCE_STATUSES, entry.status))) : el('span', { text: 'No evidence recorded' }));
+  });
+  return el('section', { class: 'sheet panel', 'aria-labelledby': 'verification-title' },
+    el('h2', { id: 'verification-title', text: 'Business verification' }),
+    el('p', { class: 'dialog-note', text: 'Relationship stage and verification are tracked independently.' }),
+    el('div', { class: 'detail-tags' }, VERIFICATION_STATUSES.map((state) => verificationTag(state.value))),
+    form,
+    el('h3', { class: 'panel-sub', text: 'Evidence and vetting checklist' }),
+    el('ul', { class: 'items' }, categories));
 }
 
 function scorePanel(d) {
@@ -461,23 +499,45 @@ function activityPanel(d) {
   );
 }
 
+function masterList(selected) {
+  const list = el('ul');
+  const search = el('input', { id: 'organization-search', type: 'search', placeholder: 'Name, domain or reference', value: organizationSearch });
+  function update() {
+    organizationSearch = search.value;
+    const term = organizationSearch.trim().toLowerCase();
+    const records = (organizations ?? []).map((record) => record.id === selected.id ? selected : record);
+    if (!records.some((record) => record.id === selected.id)) records.unshift(selected);
+    list.replaceChildren(...records.filter((record) =>
+      [record.displayName, record.domain, record.id].some((value) => value?.toLowerCase().includes(term))
+    ).map((record) => el('li', {}, el('a', {
+      href: '#org=' + encodeURIComponent(record.id),
+      'aria-current': record.id === selected.id ? 'true' : null,
+    }, el('strong', { text: record.displayName }), el('small', { text: record.domain || record.id }),
+    el('small', { text: isoLabel(ISO_STAGES, record.stage) + ' · ' + (record.tier ? 'Tier ' + record.tier : 'Not scored') })))));
+    if (!list.childElementCount) list.append(el('li', { class: 'empty', text: 'No organizations match your search.' }));
+  }
+  search.addEventListener('input', update);
+  update();
+  return el('aside', { class: 'iso-master', 'aria-labelledby': 'organization-list-title' },
+    el('h2', { id: 'organization-list-title', text: 'Organizations' }),
+    el('label', { for: 'organization-search', text: 'Search' }), search, list);
+}
+
 function renderDetail() {
   const d = current;
   const o = d.organization;
   const app = o.application ?? {};
   document.title = `${o.displayName} | ISO partners (demo)`;
-  setChildren(detailView,
-    el('div', { class: 'detail-head' },
+  const title = el('div', { class: 'detail-head' },
       el('a', { class: 'back-link', href: '#', text: '← All ISO partners' }),
       el('h1', { id: 'detail-title', tabindex: '-1', text: o.displayName }),
       el('div', { class: 'detail-tags' }, el('code', { text: o.id }), stageTag(o.stage), verificationTag(o.verificationStatus),
-        el('span', {}, 'Tier ', tierBadge(o.tier)), o.tierOverridden && tag('warn', 'Tier manually overridden'), tag('muted', 'Synthetic record'))),
-    d.possibleDuplicates.length > 0 && el('div', { class: 'callout', id: 'duplicate-warning' },
+        el('span', {}, 'Tier ', tierBadge(o.tier)), o.tierOverridden && tag('warn', 'Tier manually overridden'), tag('muted', 'Synthetic record')));
+  const duplicates = d.possibleDuplicates.length > 0 && el('div', { class: 'callout', id: 'duplicate-warning' },
       el('strong', { text: 'Possible duplicate records. ' }), 'These were not merged. Compare them and disqualify or archive one if they are the same organization.',
       el('ul', {}, d.possibleDuplicates.map((p) => el('li', {}, el('a', { href: `#org=${encodeURIComponent(p.organizationId)}`, text: p.displayName }),
-        ` — ${MATCH_LABELS[p.matchType]}${p.domain ? `, ${p.domain}` : ''}, ${isoLabel(ISO_STAGES, p.stage)}`)))),
-    el('div', { class: 'detail-grid' },
-      el('section', { class: 'sheet panel', 'aria-labelledby': 'profile-title' },
+        ` — ${MATCH_LABELS[p.matchType]}${p.domain ? `, ${p.domain}` : ''}, ${isoLabel(ISO_STAGES, p.stage)}`))));
+  const profile = el('section', { class: 'sheet panel', 'aria-labelledby': 'profile-title' },
         el('h2', { id: 'profile-title', text: 'Organization' }),
         el('dl', { class: 'ledger' },
           pair('Display name', o.displayName), pair('Legal name', o.legalName || 'Not recorded'), pair('Website', o.website || 'Not recorded'), pair('Normalized domain', o.domain || 'Not recorded'),
@@ -488,24 +548,50 @@ function renderDetail() {
           o.acquisitionSource === 'public_application' && pair('Campaign source', [o.attribution.source, o.attribution.medium, o.attribution.campaign].filter(Boolean).join(' / ') || 'direct'),
           app.referralVolume && pair('Stated monthly referrals', `${isoLabel(REFERRAL_VOLUME_BANDS, app.referralVolume)} (self-reported)`),
           app.yearsActive && pair('Stated time active', `${isoLabel(YEARS_ACTIVE_BANDS, app.yearsActive)} (self-reported)`),
-          pair('Created', dateTime(o.createdAt)), pair('Last updated', dateTime(o.updatedAt)))),
-      workflowPanel(d),
-      scorePanel(d),
-      evidencePanel(d),
-      contactsPanel(d),
-      activityPanel(d),
-    ),
-  );
+          pair('Created', dateTime(o.createdAt)), pair('Last updated', dateTime(o.updatedAt))));
+  const sections = [
+    ['overview', 'Overview', profile, workflowPanel(d)],
+    ['verification', 'Verification', verificationPanel(d)],
+    ['score', 'Score', scorePanel(d)],
+    ['evidence', 'Evidence', evidencePanel(d)],
+    ['contacts', 'Contacts', contactsPanel(d)],
+    ['activity', 'Activity', activityPanel(d)],
+  ];
+  const controls = el('div', { class: 'detail-tabs', role: 'group', 'aria-label': 'Organization details' });
+  const panels = sections.map(([key, label, ...content]) =>
+    el('div', { class: 'detail-grid', id: 'detail-section-' + key, 'aria-label': label }, content));
+  const buttons = sections.map(([key, label], index) => el('button', {
+    type: 'button', class: 'button button-quiet button-small', text: label,
+    'aria-controls': panels[index].id,
+    onclick: () => { activeSection = key; selectSection(); },
+  }));
+  function selectSection() {
+    sections.forEach(([key], index) => {
+      const selected = key === activeSection;
+      buttons[index].setAttribute('aria-pressed', String(selected));
+      panels[index].hidden = !selected;
+    });
+  }
+  selectSection();
+  controls.append(...buttons);
+  setChildren(detailView, el('div', { class: 'iso-detail-layout' },
+    masterList(o), el('article', { class: 'sheet panel' }, title, duplicates, controls, panels)));
 }
 
 // Routing ----------------------------------------------------------------------
 
 async function route() {
-  const match = location.hash.match(/^#org=(.+)$/);
+  const hash = location.hash;
+  const match = hash.match(/^#org=(.+)$/);
   pageStatus.textContent = '';
   try {
     if (match) {
-      current = await api.getOrganization(decodeURIComponent(match[1]));
+      const detail = await api.getOrganization(decodeURIComponent(match[1]));
+      if (location.hash !== hash) return;
+      if (!organizations) organizations = await api.listOrganizations(filterQuery()).catch(() => []);
+      if (location.hash !== hash) return;
+      if (current?.organization.id !== detail.organization.id) activeSection = 'overview';
+      current = detail;
       renderDetail();
       listView.hidden = true;
       detailView.hidden = false;
@@ -517,6 +603,7 @@ async function route() {
       await Promise.all([renderAnalytics(), renderList(), renderImports()]);
     }
   } catch (error) {
+    if (location.hash !== hash) return;
     pageStatus.textContent = error.message;
     if (match) { detailView.hidden = true; listView.hidden = false; }
   }
@@ -556,7 +643,9 @@ async function init() {
     }
   });
 
-  window.addEventListener('hashchange', route);
+  window.addEventListener('hashchange', (event) => {
+    if (location.hash.startsWith('#org=') || new URL(event.oldURL).hash.startsWith('#org=')) route();
+  });
   await route();
 }
 

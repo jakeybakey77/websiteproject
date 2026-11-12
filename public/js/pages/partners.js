@@ -141,3 +141,4 @@ form.addEventListener('submit', async (event) => {
     submit.disabled = false;
   }
 });
+form.hidden = false;
