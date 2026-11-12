@@ -57,7 +57,9 @@ try {
     if (message.type() === 'error' && !(expectedFailure || expected422)) errors.push('Unexpected console error');
     if (/gcp_[A-Za-z0-9_-]{24}/.test(message.text())) errors.push('Referral code in console');
   });
-  page.on('requestfailed', (request) => { if (!expectedFailure) failed.push(new URL(request.url()).pathname); });
+  page.on('requestfailed', (request) => {
+    if (!expectedFailure) failed.push({ path: new URL(request.url()).pathname, error: request.failure()?.errorText });
+  });
   page.on('response', (response) => {
     if (response.status() >= 400 && !(expected422 && response.status() === 422)) unexpected.push(response.status());
   });
@@ -73,6 +75,10 @@ try {
     if (!dir) return;
     await mkdir(dir, { recursive: true });
     await page.screenshot({ path: join(dir, name + '.png'), mask: [page.locator('#referral-active-link')] });
+  };
+  const finishPageLoad = async () => {
+    await page.waitForLoadState('load');
+    await page.evaluate(() => document.fonts.ready.then(() => {}));
   };
   async function openReferrals(org) {
     await page.goto(iso(org));
@@ -108,13 +114,17 @@ try {
   await page.locator('#username').fill(CREDENTIALS.username);
   await page.locator('#password').fill(CREDENTIALS.password);
   await btn('Sign in').click();
+  await page.waitForURL('/admin/');
   await visible(heading('Merchant inquiries'));
+  await finishPageLoad();
+  await visible(page.locator('#lead-rows .inquiry-name').first());
   await openReferrals(ineligible);
   assert.ok(await btn('Issue demo referral link').isDisabled());
   await waitText('Available only while the partner is Active and Verified.');
   await openReferrals(a);
   await btn('Issue demo referral link').click();
   await visible(page.locator('#referral-active-link'));
+  assert.equal(await page.getByText('false', { exact: true }).count(), 0);
   const firstUrl = await page.locator('#referral-active-link').inputValue();
   assert.equal(new URL(firstUrl).origin, local.base);
   await btn('Copy').click();
@@ -129,6 +139,7 @@ try {
   await page.getByRole('link', { name: 'For partners', exact: true }).first().click();
   assert.ok(!new URL(page.url()).searchParams.has('ref') && !await page.evaluate(() => document.referrer));
   assert.equal(new URL(page.url()).searchParams.get('utm_source'), 'meta_ads');
+  await finishPageLoad();
   await page.goto(arrival);
   await page.getByRole('link', { name: 'Get Business Funding', exact: true }).first().click();
   await waitText('Referral link detected (demo)');
@@ -181,6 +192,10 @@ try {
   await visible(page.locator('#referral-target'));
   assert.equal(await page.locator('#lead-dialog').evaluate((element) => element.open), true);
   await page.locator('#referral-target').selectOption(b);
+  await page.locator('#referral-reason').fill('too short');
+  await btn('Confirm correction').click();
+  assert.equal(await page.locator('#referral-reason').evaluate((el) => el.validationMessage),
+    'Enter a reason with at least 10 non-whitespace characters.');
   await page.locator('#referral-reason').fill(REASON);
 
   const correctionIds = [];
@@ -264,6 +279,7 @@ try {
 
   await page.goto('/apply.html?ref=malformed');
   await visible(page.getByRole('alert'));
+  await finishPageLoad();
   await page.goto('/apply.html');
   assert.equal(await page.locator('#referral-banner').isVisible(), false);
   await fillInquiry();
@@ -304,6 +320,7 @@ try {
   await page.getByRole('link', { name: referred, exact: true }).click();
   await visible(page.locator('#referral-target'));
   await fits();
+  await heading('Referral attribution').scrollIntoViewIfNeeded();
   await picture('mobile-merchant-attribution');
   assert.deepEqual({ errors, failed, unexpected }, { errors: [], failed: [], unexpected: [] });
 

@@ -111,7 +111,7 @@ export function createIsoStore(db, { audit, tx: sharedTx, onLeaveActivePartner =
       .run(orgId, type, body, JSON.stringify(detail), dueOn, actor, now);
     return Number(result.lastInsertRowid);
   }
-  const record = (orgId, action, actor, detail = {}) => audit({ actor, action, isoOrgId: orgId, detail });
+  const record = (orgId, action, actor, detail = {}, at) => audit({ actor, action, isoOrgId: orgId, detail, at });
 
   // Scoring ------------------------------------------------------------------
   const lastComputed = (orgId) => db.prepare("SELECT * FROM iso_score_snapshots WHERE organization_id = ? AND kind = 'computed' ORDER BY id DESC LIMIT 1").get(orgId);
@@ -278,7 +278,7 @@ export function createIsoStore(db, { audit, tx: sharedTx, onLeaveActivePartner =
         if (org.stage === 'active_partner' && onLeaveActivePartner) onLeaveActivePartner({ organizationId: id, actor, now, stageBefore: org.stage, stageAfter: stage });
         db.prepare('UPDATE iso_organizations SET stage=?, disqualify_reason=?, updated_at=? WHERE id=?').run(stage, reason, now, id);
         logActivity(id, { type: 'stage_change', body: note, actor, now, detail: { from: org.stage, to: stage, reason } });
-        record(id, 'iso_stage_changed', actor, { stageBefore: org.stage, stageAfter: stage, reason });
+        record(id, 'iso_stage_changed', actor, { stageBefore: org.stage, stageAfter: stage, reason }, now);
         return requireOrg(id);
       });
     },

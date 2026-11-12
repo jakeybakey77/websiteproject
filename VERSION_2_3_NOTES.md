@@ -1,5 +1,7 @@
 # v2.3 — ISO referral tracking (Gate A: backend)
 
+For the integrated Gate A + Gate B release status, verification, and database recovery steps, see [the v2.3 release checkpoint](docs/V2_3_RELEASE.md). The notes below preserve the original Gate A handoff.
+
 Synthetic demo data only. Not implemented, by design: real merchant or ISO data, partner login, outreach, funder submission, payouts, commissions, financing decisions. Nothing in this change deploys anything or touches Railway.
 
 **Scope of this change:** the backend half of the v2.3 specification (migration, services, APIs, tests). The visible UI — referral banner on `/apply.html`, "Referred by" in the merchant admin, the Referrals tab in the ISO admin — is Gate B and is intentionally **not** included, so it can be built from the approved v2.2 design system without competing edits. No existing page, stylesheet or page script was changed.

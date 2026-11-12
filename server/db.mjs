@@ -174,9 +174,9 @@ export function openDatabase(path, { seed = false, publicBaseUrl = '' } = {}) {
     deleteSession(tokenHash) {
       db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(tokenHash);
     },
-    audit({ actor, action, leadId = null, isoOrgId = null, detail = {} }) {
+    audit({ actor, action, leadId = null, isoOrgId = null, detail = {}, at = new Date().toISOString() }) {
       db.prepare('INSERT INTO audit_log(actor,action,lead_id,iso_organization_id,detail_json,at) VALUES(?,?,?,?,?,?)')
-        .run(actor, action, leadId, isoOrgId, JSON.stringify(detail), new Date().toISOString());
+        .run(actor, action, leadId, isoOrgId, JSON.stringify(detail), at);
     },
     listAudit(limit = 100) {
       const safe = Math.max(1, Math.min(500, Number(limit) || 100));

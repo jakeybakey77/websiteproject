@@ -243,7 +243,7 @@ export function createReferralStore(db, { audit, tx, insertLead, getLead, record
         for (const row of rows) {
           markRevoked(row, { revokedBy, reason: STAGE_CHANGE_REVOKE_REASON, now });
           recordIsoActivity(organizationId, { type: 'referral_code_revoked', body: STAGE_CHANGE_REVOKE_REASON, actor: revokedBy, now, detail: { referralCodeId: row.id, stageBefore, stageAfter } });
-          audit({ actor: revokedBy, action: 'iso_referral_code_revoked', isoOrgId: organizationId, detail: { referralCodeId: row.id, reason: STAGE_CHANGE_REVOKE_REASON, stageBefore, stageAfter } });
+          audit({ actor: revokedBy, action: 'iso_referral_code_revoked', isoOrgId: organizationId, at: now, detail: { referralCodeId: row.id, reason: STAGE_CHANGE_REVOKE_REASON, stageBefore, stageAfter } });
         }
         return rows.length;
       });

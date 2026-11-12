@@ -117,7 +117,7 @@ export function createReferralsPanel(orgId) {
       el('h3', { class: 'panel-sub', text: 'Demo referral links' }),
       el('p', {}, 'Relationship stage: ' + isoLabel(ISO_STAGES, eligibility.stage)
         + ' · Verification: ' + isoLabel(VERIFICATION_STATUSES, eligibility.verificationStatus)),
-      !eligible && el('p', { class: 'dialog-note', text: 'Available only while the partner is Active and Verified.' }),
+      el('p', { class: 'dialog-note', hidden: eligible, text: 'Available only while the partner is Active and Verified.' }),
       active,
       el('h3', { class: 'panel-sub', text: 'Issuance history' }),
       codes.length ? table('Referral code issuance history', ['Status', 'Created', 'Created by', 'Revoked', 'Revoked by', 'Reason'],
