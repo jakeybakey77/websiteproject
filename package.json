@@ -1,13 +1,13 @@
 {
   "name": "greenwich-credit-partners-mvp",
-  "version": "2.1.0",
+  "version": "2.3.0",
   "private": true,
   "type": "module",
   "description": "Server-backed demo MVP: small-business funding inquiries and ISO partner intelligence with authenticated reviewer workflows. Synthetic data only.",
   "scripts": {
     "start": "node scripts/server.mjs",
     "test": "node --test",
-    "check": "node --check scripts/server.mjs && node --check server/app.mjs && node --check server/db.mjs && node --check server/migrations.mjs && node --check server/iso-store.mjs && node --check server/iso-routes.mjs && node --check server/iso-scoring.mjs && node --check server/iso-csv.mjs && node --check server/iso-application.mjs && node --check public/js/pages/apply.js && node --check public/js/pages/dashboard.js && node --check public/js/pages/partners.js && node --check public/js/pages/iso-admin.js"
+    "check": "node --check scripts/server.mjs && node --check server/app.mjs && node --check server/db.mjs && node --check server/migrations.mjs && node --check server/iso-store.mjs && node --check server/iso-routes.mjs && node --check server/iso-scoring.mjs && node --check server/iso-csv.mjs && node --check server/iso-application.mjs && node --check server/referral-store.mjs && node --check server/tx.mjs && node --check server/inquiry.mjs && node --check server/config.mjs && node --check public/js/lib/referral-code.js && node --check public/js/pages/apply.js && node --check public/js/pages/dashboard.js && node --check public/js/pages/partners.js && node --check public/js/pages/iso-admin.js"
   },
   "engines": {
     "node": ">=22.13"

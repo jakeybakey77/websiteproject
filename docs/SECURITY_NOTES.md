@@ -14,6 +14,8 @@
 - Content Security Policy and related browser security headers
 - Audit table for key workflow/authentication events
 - Production startup refuses missing admin password or session secret
+- v2.3 referral codes: 144-bit random, admin-only visibility, never written to audit or logs, not a credential; eligibility re-checked in the write transaction and by database triggers; absolute links built only from a validated `GCP_PUBLIC_ORIGIN`, never from request headers
+- Idempotent public submission keys; a replay returns only the submission-time receipt
 
 ## Not a production security claim
 

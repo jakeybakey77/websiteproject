@@ -7,6 +7,7 @@ import { openDatabase } from './db.mjs';
 import { createLeadFromInquiry, validateInquiryPayload } from './inquiry.mjs';
 import { validateIsoApplication } from './iso-application.mjs';
 import { handleIsoAdmin } from './iso-routes.mjs';
+import { inquiryDigest } from './referral-store.mjs';
 import {
   clearSessionCookie,
   destroySession,
@@ -43,9 +44,18 @@ const clientIp = (req) => {
 
 const withValidation = (lead) => ({ ...lead, validation: evaluateLead(lead, validationRules) });
 
+// What the applicant gets back. A replayed submission returns this same receipt, so the
+// review state is pinned to its values at submission time: a retry can never be used to
+// read a reviewer's later stage change or notes. No partner identity, score or contact.
+const inquiryReceipt = (lead, referred) => ({
+  ...lead,
+  stage: 'new', followUpReason: '', lastReviewNote: '', reviewedAt: null, reviewHistory: [], workflowMilestones: {}, updatedAt: lead.createdAt,
+  referralAttribution: { recorded: referred },
+});
+
 export function createApp(options) {
   const cfg = options.config;
-  const db = options.db ?? openDatabase(cfg.dbPath, { seed: cfg.seedSampleLeads });
+  const db = options.db ?? openDatabase(cfg.dbPath, { seed: cfg.seedSampleLeads, publicBaseUrl: cfg.publicBaseUrl ?? '' });
   const loginLimit = rateLimiter({ limit: 8, windowMs: 15 * 60 * 1000 });
   const inquiryLimit = rateLimiter({ limit: 40, windowMs: 10 * 60 * 1000 });
   const isoApplicationLimit = rateLimiter({ limit: 40, windowMs: 10 * 60 * 1000 });
@@ -111,9 +121,15 @@ export function createApp(options) {
         }
         const payload = await readJson(req, cfg.maxBodyBytes);
         const validated = validateInquiryPayload(payload, { demoMode: true });
-        const lead = db.insertLead(createLeadFromInquiry(validated, { demoMode: true }));
-        db.audit({ actor: 'public-demo', action: 'demo_inquiry_created', leadId: lead.id, detail: { source: lead.source, medium: lead.medium, campaign: lead.campaign } });
-        json(res, 201, lead);
+        // Lead, referral credit, history, submission key and audit commit in one transaction.
+        // An unknown or revoked code, or a partner that is no longer eligible, stores nothing.
+        const result = db.referrals.submitInquiry({
+          lead: createLeadFromInquiry(validated, { demoMode: true }),
+          referralCode: validated.referralCode,
+          submissionId: validated.submissionId,
+          digest: inquiryDigest(validated),
+        });
+        json(res, result.replayed ? 200 : 201, inquiryReceipt(result.lead, result.referred), result.replayed ? { 'Idempotent-Replay': 'true' } : {});
         return;
       }
 
@@ -180,7 +196,28 @@ export function createApp(options) {
         }
 
         if (req.method === 'GET' && path === '/api/admin/leads') {
-          json(res, 200, { leads: db.listLeads().map(withValidation) });
+          // Existing fields are unchanged; "referral" is the current effective credit or null.
+          const referrals = db.referrals.leadSummaries();
+          let leads = db.listLeads().map((lead) => ({ ...withValidation(lead), referral: referrals.get(lead.id) ?? null }));
+          const referredBy = url.searchParams.get('referredBy');
+          if (referredBy === 'direct') leads = leads.filter((lead) => !lead.referral);
+          else if (referredBy) leads = leads.filter((lead) => lead.referral?.isoOrganizationId === referredBy);
+          json(res, 200, { leads });
+          return;
+        }
+
+        const matchReferral = path.match(/^\/api\/admin\/leads\/([^/]+)\/referral$/);
+        if (matchReferral && req.method === 'GET') {
+          json(res, 200, { referral: db.referrals.getLeadReferral(decodeURIComponent(matchReferral[1])) });
+          return;
+        }
+        if (matchReferral && req.method === 'POST') {
+          if (!verifyCsrf(req, session)) {
+            json(res, 403, { error: 'Invalid CSRF token.' });
+            return;
+          }
+          const { changed, replayed = false, ...referral } = db.referrals.correctLeadReferral(decodeURIComponent(matchReferral[1]), await readJson(req, 16 * 1024), session.username);
+          json(res, 200, { changed, ...(replayed ? { replayed } : {}), referral });
           return;
         }
 
@@ -276,6 +313,7 @@ export function createApp(options) {
       const status = Number(error.statusCode) || 500;
       const body = { error: status >= 500 ? 'Internal server error.' : error.message };
       if (error.fieldErrors) body.fieldErrors = error.fieldErrors;
+      if (error.errorCode && status < 500) body.code = error.errorCode;
       if (status >= 500) console.error(error);
       json(res, status, body);
     }

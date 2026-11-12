@@ -220,9 +220,119 @@ const ISO_PARTNER_INTELLIGENCE = `
   ALTER TABLE audit_log ADD COLUMN iso_organization_id TEXT;
 `;
 
+// v2.3 ISO referral tracking. Forward-only; migrations 1 and 2 are untouched.
+//
+// The link between a merchant inquiry and a partner lives only in lead_referrals
+// (current effective credit) and lead_referral_events (append-only history).
+// Nothing here adds a column to leads or copies a partner score, tier or evidence
+// item anywhere near a merchant record.
+//
+// The triggers are a second line of defence behind the application rules: even a
+// caller that bypasses the service layer cannot credit an ineligible partner,
+// reuse a revoked code, or leave a code active after the partner stops being active.
+const ELIGIBLE_ORG = (ref) => `EXISTS (SELECT 1 FROM iso_organizations o WHERE o.id = ${ref} AND o.stage = 'active_partner' AND o.verification_status = 'verified')`;
+const ISO_REFERRAL_TRACKING = `
+  CREATE TABLE iso_referral_codes (
+    id TEXT PRIMARY KEY,
+    iso_organization_id TEXT NOT NULL REFERENCES iso_organizations(id),
+    -- Opaque random public identifier. Compared byte-for-byte (case-sensitive).
+    code TEXT NOT NULL UNIQUE CHECK (length(code) = 28 AND code GLOB 'gcp_*'),
+    status TEXT NOT NULL CHECK (status IN ('active','revoked')),
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    revoked_by TEXT,
+    revoked_at TEXT,
+    revoke_reason TEXT,
+    CHECK ((status = 'active' AND revoked_by IS NULL AND revoked_at IS NULL AND revoke_reason IS NULL)
+        OR (status = 'revoked' AND revoked_by IS NOT NULL AND revoked_at IS NOT NULL AND length(revoke_reason) > 0))
+  );
+  CREATE INDEX idx_referral_codes_org_status ON iso_referral_codes(iso_organization_id, status);
+  -- At most one active code per organization, enforced by the database.
+  CREATE UNIQUE INDEX idx_referral_codes_one_active ON iso_referral_codes(iso_organization_id) WHERE status = 'active';
+
+  CREATE TRIGGER iso_referral_codes_issue_requires_eligibility BEFORE INSERT ON iso_referral_codes
+    WHEN NEW.status = 'active' AND NOT ${ELIGIBLE_ORG('NEW.iso_organization_id')}
+    BEGIN SELECT RAISE(ABORT, 'referral code requires an active, verified partner'); END;
+  -- The only permitted change is active -> revoked. A revoked code is final.
+  CREATE TRIGGER iso_referral_codes_revoke_only BEFORE UPDATE ON iso_referral_codes
+    WHEN OLD.status = 'revoked' OR NEW.status <> 'revoked' OR NEW.id <> OLD.id OR NEW.code <> OLD.code
+      OR NEW.iso_organization_id <> OLD.iso_organization_id OR NEW.created_by <> OLD.created_by OR NEW.created_at <> OLD.created_at
+    BEGIN SELECT RAISE(ABORT, 'referral codes can only be revoked, never edited or reactivated'); END;
+  CREATE TRIGGER iso_referral_codes_no_delete BEFORE DELETE ON iso_referral_codes
+    BEGIN SELECT RAISE(ABORT, 'referral codes are never deleted'); END;
+  -- Backstop: leaving active_partner revokes any still-active code in the same statement.
+  -- The application revokes first (with the acting reviewer); this only catches a bypass.
+  CREATE TRIGGER iso_organizations_leaving_active_revokes_codes AFTER UPDATE OF stage ON iso_organizations
+    WHEN OLD.stage = 'active_partner' AND NEW.stage <> 'active_partner'
+    BEGIN
+      UPDATE iso_referral_codes SET status = 'revoked', revoked_by = 'system:schema-guard',
+        revoked_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), revoke_reason = 'partner_stage_changed'
+      WHERE iso_organization_id = NEW.id AND status = 'active';
+    END;
+
+  -- Current effective credit: at most one partner per inquiry. No row = direct / unattributed.
+  CREATE TABLE lead_referrals (
+    lead_id TEXT PRIMARY KEY REFERENCES leads(id),
+    iso_organization_id TEXT NOT NULL REFERENCES iso_organizations(id),
+    referral_code_id TEXT REFERENCES iso_referral_codes(id),
+    method TEXT NOT NULL CHECK (method IN ('public_code','manual')),
+    first_attributed_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    updated_by TEXT NOT NULL,
+    CHECK (method = 'manual' OR referral_code_id IS NOT NULL)
+  );
+  CREATE INDEX idx_lead_referrals_org ON lead_referrals(iso_organization_id, lead_id);
+
+  CREATE TRIGGER lead_referrals_credit_requires_eligibility BEFORE INSERT ON lead_referrals
+    WHEN NOT ${ELIGIBLE_ORG('NEW.iso_organization_id')}
+    BEGIN SELECT RAISE(ABORT, 'referral credit requires an active, verified partner'); END;
+  CREATE TRIGGER lead_referrals_code_must_be_live BEFORE INSERT ON lead_referrals
+    WHEN NEW.referral_code_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM iso_referral_codes c
+      WHERE c.id = NEW.referral_code_id AND c.iso_organization_id = NEW.iso_organization_id AND c.status = 'active')
+    BEGIN SELECT RAISE(ABORT, 'referral credit requires an active code owned by the credited partner'); END;
+  CREATE TRIGGER lead_referrals_reassign_requires_eligibility BEFORE UPDATE OF iso_organization_id ON lead_referrals
+    WHEN NEW.iso_organization_id <> OLD.iso_organization_id AND NOT ${ELIGIBLE_ORG('NEW.iso_organization_id')}
+    BEGIN SELECT RAISE(ABORT, 'referral credit requires an active, verified partner'); END;
+
+  -- Append-only history of every credit, correction and removal.
+  CREATE TABLE lead_referral_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    lead_id TEXT NOT NULL REFERENCES leads(id),
+    old_iso_id TEXT REFERENCES iso_organizations(id),
+    new_iso_id TEXT REFERENCES iso_organizations(id),
+    referral_code_id TEXT REFERENCES iso_referral_codes(id),
+    event_type TEXT NOT NULL CHECK (event_type IN ('created','corrected','removed')),
+    actor TEXT NOT NULL,
+    reason TEXT NOT NULL CHECK (length(reason) > 0),
+    request_id TEXT,
+    at TEXT NOT NULL,
+    CHECK (event_type <> 'created' OR (old_iso_id IS NULL AND new_iso_id IS NOT NULL AND referral_code_id IS NOT NULL)),
+    CHECK (event_type <> 'removed' OR (old_iso_id IS NOT NULL AND new_iso_id IS NULL)),
+    CHECK (event_type <> 'corrected' OR (new_iso_id IS NOT NULL AND new_iso_id IS NOT old_iso_id)),
+    -- A human correction or removal must carry a written reason.
+    CHECK (event_type = 'created' OR length(trim(reason)) >= 10)
+  );
+  CREATE INDEX idx_lead_referral_events_lead ON lead_referral_events(lead_id, id);
+  CREATE UNIQUE INDEX idx_lead_referral_events_one_created ON lead_referral_events(lead_id) WHERE event_type = 'created';
+  CREATE UNIQUE INDEX idx_lead_referral_events_request ON lead_referral_events(lead_id, request_id) WHERE request_id IS NOT NULL;
+  CREATE TRIGGER lead_referral_events_no_update BEFORE UPDATE ON lead_referral_events
+    BEGIN SELECT RAISE(ABORT, 'lead_referral_events is append-only'); END;
+  CREATE TRIGGER lead_referral_events_no_delete BEFORE DELETE ON lead_referral_events
+    BEGIN SELECT RAISE(ABORT, 'lead_referral_events is append-only'); END;
+
+  -- Idempotent public submission: one key maps to exactly one stored inquiry.
+  CREATE TABLE lead_submission_keys (
+    submission_key TEXT PRIMARY KEY CHECK (length(submission_key) BETWEEN 16 AND 64),
+    payload_digest TEXT NOT NULL CHECK (length(payload_digest) = 64),
+    lead_id TEXT NOT NULL UNIQUE REFERENCES leads(id),
+    created_at TEXT NOT NULL
+  );
+`;
+
 export const MIGRATIONS = Object.freeze([
   { version: 1, name: 'baseline_merchant_leads_sessions_audit', sql: BASELINE },
   { version: 2, name: 'iso_partner_intelligence', sql: ISO_PARTNER_INTELLIGENCE },
+  { version: 3, name: 'iso_referral_tracking', sql: ISO_REFERRAL_TRACKING },
 ]);
 
 export function runMigrations(db, migrations = MIGRATIONS) {

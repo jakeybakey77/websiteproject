@@ -191,3 +191,14 @@ A second, parallel funnel for ISO / broker / referral-partner records. It shares
 - Schema migrations: `server/migrations.mjs` (a v2.0 database upgrades in place).
 
 Not included, by design: scraping, enrichment, email or any outreach, bank data, funder submission, funding decisions.
+
+## ISO referral tracking (v2.3, backend only)
+
+Links a synthetic merchant inquiry to the one ISO whose demo referral code it was submitted with. See `VERSION_2_3_NOTES.md` for the API, schema and open items.
+
+- Only a partner that is `active_partner` **and** `verified` can be issued a link or credited. The A-D score is never consulted.
+- Codes are opaque random tokens, admin-issued, revocable, and revoked automatically (same transaction) when the partner leaves the active stage.
+- `POST /api/inquiries` accepts optional `referralCode` and `submissionId` (idempotent retries). A bad code is a `422` with nothing stored; no code is a normal direct inquiry.
+- Manual reassignment/removal needs a written reason and is kept in an append-only history.
+- Schema migration 3. **Back up the database before deploying it**: v2.1 will not start on the migrated file.
+- The admin and public pages do not show any of this yet; that UI follows the v2.2 redesign.
