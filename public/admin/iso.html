@@ -11,9 +11,10 @@
     <link rel="stylesheet" href="../styles/base.css" />
     <link rel="stylesheet" href="../styles/dashboard.css" />
     <link rel="stylesheet" href="../styles/iso.css" />
+    <link rel="stylesheet" href="/styles/workspace.css" />
     <script type="module" src="../js/pages/iso-admin.js"></script>
   </head>
-  <body>
+  <body class="admin-shell">
     <a class="skip-link" href="#main">Skip to main content</a>
 
     <!-- Authenticated demo workspace for ISO / referral-partner records. Partner-priority
@@ -25,13 +26,12 @@
       </div>
     </div>
 
-    <header class="site-header">
+    <header class="site-header admin-header">
       <div class="container">
-        <a class="brand" href="./">Greenwich Credit Partners <small>Internal dashboard</small></a>
+        <a class="brand" href="./"><span>Greenwich<small>Credit Partners</small></span></a>
         <nav class="admin-nav" aria-label="Workspace"><a href="./">Merchant inquiries</a><a href="iso.html" aria-current="page">ISO partners</a></nav>
         <span class="admin-session">Signed in as <strong id="admin-user">reviewer</strong></span>
-        <button id="logout" type="button" class="button button-quiet button-small">Sign out</button>
-        <a href="../index.html">Public site</a>
+        <div class="admin-session-links"><a href="/">Public site ↗</a><button id="logout" type="button" class="link-button">Sign out</button></div>
       </div>
     </header>
 
@@ -40,8 +40,46 @@
 
       <!-- List view ------------------------------------------------------- -->
       <div id="view-list" class="view">
-        <h1>ISO partners</h1>
+        <div class="dashboard-title"><div><h1>ISO partners</h1><p>Synthetic partner intelligence. The workspace sends no outreach.</p></div><a class="button button-small" href="#import-title">Import CSV</a></div>
         <dl id="iso-stats" class="stats"></dl>
+
+        <section class="sheet panel" aria-labelledby="list-title">
+          <h2 id="list-title">Organizations</h2>
+          <form id="filters" class="filters">
+            <div><label for="q">Search</label><input id="q" name="q" type="search" placeholder="Name, domain or reference" autocomplete="off" /></div>
+            <div><label for="f-stage">Stage</label><select id="f-stage" name="stage"><option value="">All stages</option></select></div>
+            <div><label for="f-tier">Tier</label><select id="f-tier" name="tier"><option value="">All tiers</option></select></div>
+            <div><label for="f-verification">Verification</label><select id="f-verification" name="verification"><option value="">Any verification state</option></select></div>
+            <div><label for="f-source">Source</label><select id="f-source" name="source"><option value="">All sources</option></select></div>
+            <div><label for="f-reviewer">Reviewer</label><select id="f-reviewer" name="reviewer"><option value="">Anyone</option><option value="unassigned">Unassigned</option></select></div>
+            <div><label for="f-sort">Sort by</label><select id="f-sort" name="sort">
+              <option value="created">Newest first</option><option value="score">Highest score</option><option value="name">Name (A–Z)</option><option value="updated">Recently updated</option>
+            </select></div>
+            <button type="reset" class="button button-quiet button-small">Clear filters</button>
+            <a id="export-csv" class="button button-secondary button-small" href="#" download>Export filtered CSV</a>
+            <a class="button button-secondary button-small" href="#duplicate-title">Duplicate review</a>
+          </form>
+          <p class="result-count">Export contains organization-level fields only. Contact names, emails and phones are not exported.</p>
+          <p id="result-count" class="result-count" role="status"></p>
+          <div class="table-scroll record-list" role="region" aria-labelledby="list-title" tabindex="0">
+            <table role="table">
+              <thead role="rowgroup"><tr role="row">
+                <th role="columnheader" scope="col">Organization <span class="note">(fictional)</span></th>
+                <th role="columnheader" scope="col" class="wide">Domain</th>
+                <th role="columnheader" scope="col">Region</th>
+                <th role="columnheader" scope="col">Stage</th>
+                <th role="columnheader" scope="col" class="wide">Verification</th>
+                <th role="columnheader" scope="col">Tier</th>
+                <th role="columnheader" scope="col" class="num">Score</th>
+                <th role="columnheader" scope="col" class="wide">Source</th>
+                <th role="columnheader" scope="col" class="wide">Reviewer</th>
+                <th role="columnheader" scope="col" class="wide">Updated</th>
+              </tr></thead>
+              <tbody role="rowgroup" id="org-rows"></tbody>
+            </table>
+          </div>
+          <p id="empty" class="empty" hidden></p>
+        </section>
 
         <div class="panels">
           <section class="sheet panel" aria-labelledby="stage-title">
@@ -62,42 +100,7 @@
           <p id="not-measured" class="dialog-note"></p>
         </section>
 
-        <section class="sheet panel" aria-labelledby="list-title">
-          <h2 id="list-title">Organizations</h2>
-          <form id="filters" class="filters">
-            <div><label for="q">Search</label><input id="q" name="q" type="search" placeholder="Name, domain or reference" autocomplete="off" /></div>
-            <div><label for="f-stage">Stage</label><select id="f-stage" name="stage"><option value="">All stages</option></select></div>
-            <div><label for="f-tier">Tier</label><select id="f-tier" name="tier"><option value="">All tiers</option></select></div>
-            <div><label for="f-verification">Verification</label><select id="f-verification" name="verification"><option value="">Any verification state</option></select></div>
-            <div><label for="f-source">Source</label><select id="f-source" name="source"><option value="">All sources</option></select></div>
-            <div><label for="f-reviewer">Reviewer</label><select id="f-reviewer" name="reviewer"><option value="">Anyone</option><option value="unassigned">Unassigned</option></select></div>
-            <div><label for="f-sort">Sort by</label><select id="f-sort" name="sort">
-              <option value="created">Newest first</option><option value="score">Highest score</option><option value="name">Name (A–Z)</option><option value="updated">Recently updated</option>
-            </select></div>
-            <button type="reset" class="button button-quiet button-small">Clear filters</button>
-            <a id="export-csv" class="button button-small" href="#" download>Export filtered CSV</a>
-          </form>
-          <p class="result-count">Export contains organization-level fields only. Contact names, emails and phones are not exported.</p>
-          <p id="result-count" class="result-count" role="status"></p>
-          <div class="table-scroll" role="region" aria-labelledby="list-title" tabindex="0">
-            <table>
-              <thead><tr>
-                <th scope="col">Organization <span class="note">(fictional)</span></th>
-                <th scope="col" class="wide">Domain</th>
-                <th scope="col">Region</th>
-                <th scope="col">Stage</th>
-                <th scope="col" class="wide">Verification</th>
-                <th scope="col">Tier</th>
-                <th scope="col" class="num">Score</th>
-                <th scope="col" class="wide">Source</th>
-                <th scope="col" class="wide">Reviewer</th>
-                <th scope="col" class="wide">Updated</th>
-              </tr></thead>
-              <tbody id="org-rows"></tbody>
-            </table>
-          </div>
-          <p id="empty" class="empty" hidden></p>
-        </section>
+
 
         <section class="sheet panel" aria-labelledby="import-title">
           <h2 id="import-title">CSV import <span class="note">(synthetic records only)</span></h2>
@@ -105,6 +108,7 @@
             Rows are validated on the server. Contact emails must use a reserved demo domain (such as example.com) and phones a fictional 555-01xx number; anything else is rejected and not stored. Possible duplicates go to a review queue and are never merged automatically.
             <a href="../samples/iso-partners-sample.csv" download>Download a sample file</a>.
           </p>
+          <p class="import-step" id="import-step" aria-live="polite">1 of 3 · Upload</p>
           <form id="import-form" class="import-form">
             <div><label for="import-file">CSV file <span class="note">(UTF-8, up to 256 KB and 500 rows)</span></label><input id="import-file" name="file" type="file" accept=".csv,text/csv" /></div>
             <button type="submit" class="button button-small">Preview import</button>
@@ -112,7 +116,7 @@
           <p id="import-status" class="result-count" role="status" aria-live="polite"></p>
           <div id="import-preview"></div>
 
-          <h3 class="panel-sub">Duplicate review queue</h3>
+          <h3 id="duplicate-title" class="panel-sub">Duplicate review queue</h3>
           <div id="duplicate-queue"></div>
 
           <h3 class="panel-sub">Import history</h3>

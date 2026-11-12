@@ -19,9 +19,9 @@
 }
 
 .confirmation .reference {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
   font-size: var(--text-xl);
-  font-weight: 700;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }

@@ -1,66 +1,42 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Partner application | Greenwich Credit Partners demo</title>
-    <meta name="robots" content="noindex, nofollow" />
-    <meta name="theme-color" content="#14293b" />
-    <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="styles/tokens.css" />
-    <link rel="stylesheet" href="styles/base.css" />
-    <link rel="stylesheet" href="styles/apply.css" />
-    <link rel="stylesheet" href="styles/partners.css" />
-    <script type="module" src="js/pages/partners.js"></script>
-  </head>
-  <body>
-    <a class="skip-link" href="#main">Skip to main content</a>
-
-    <div class="demo-strip" role="note">
-      <div class="container">
-        <strong>Prototype</strong>Simulation only. Partner applications use built-in fictional organizations and are stored on this server for workflow testing.
-      </div>
-    </div>
-
-    <header class="site-header">
-      <div class="container">
-        <a class="brand" href="index.html">Greenwich Credit Partners</a>
-        <a href="apply.html">Business funding inquiry</a>
-        <a href="index.html">Back to home</a>
-      </div>
-    </header>
-
-    <main id="main" class="container apply">
-      <noscript>
-        <p class="marker">This form needs JavaScript. Turn it on in your browser settings and reload the page.</p>
-      </noscript>
-
-      <!--
-        ISO / referral-partner demo application. Separate from the merchant inquiry
-        (apply.html): different endpoint (/api/iso/applications), schema and storage.
-
-        TODO(consent): before any live partner intake, add reviewed consent and
-        partner-agreement language, and record what was shown and when.
-        TODO(privacy): real organization or contact fields must not be added until
-        storage, access control, retention and legal review are in place.
-      -->
-      <form id="partner-form" class="sheet inquiry" novalidate>
-        <p class="partner-eyebrow">For ISOs, brokers and referral partners</p>
-        <h1 id="form-title" tabindex="-1">Partner application</h1>
-        <p class="step-intro">
-          Tell us how your organization refers small businesses. A person reviews every application; nothing on this page creates a partnership, a referral agreement or a funding decision.
-        </p>
-        <div id="error-summary" class="error-summary" tabindex="-1" hidden></div>
-        <div id="form-body" class="step-body"></div>
-        <div class="form-actions">
-          <button type="submit" id="submit" class="button">Submit demo application</button>
-        </div>
-      </form>
-
-      <p id="status" class="status" role="status"></p>
-      <p class="fine">
-        Do not enter real organization names, contact details or documents. Greenwich Credit Partners is a working project name; it is not a lender and this demonstration is not an offer to enter a referral relationship.
-      </p>
-    </main>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#14293b">
+  <title>Partner application | Greenwich Credit Partners</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/styles/tokens.css">
+  <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/apply.css">
+  <link rel="stylesheet" href="/styles/partners.css">
+  <script type="module" src="/js/pages/landing.js"></script>
+  <script type="module" src="/js/pages/partners.js"></script>
+</head>
+<body class="intake-page">
+<a class="skip-link" href="#main">Skip to main content</a>
+<div class="demo-strip" role="note"><div class="container">Demonstration prototype. Use fictional information only. Synthetic submissions are stored on the demo server.</div></div>
+<header class="site-header public-header"><div class="container"><a class="brand" href="/" data-carry-query aria-label="Greenwich Credit Partners home"><span>Greenwich<small>Credit Partners</small></span></a><nav class="public-nav" aria-label="Main navigation"><a href="/#solutions">Business needs</a><a href="/#how-it-works">Our approach</a><a href="/#questions">FAQs</a><a href="/partner-program.html" data-carry-query>For partners</a><a class="button button-small" href="/apply.html" data-carry-query>Get Business Funding</a></nav><details class="mobile-menu"><summary class="button button-secondary">Menu <span aria-hidden="true">☰</span></summary><nav aria-label="Main navigation"><a href="/#solutions">Business needs</a><a href="/#how-it-works">Our approach</a><a href="/#questions">FAQs</a><a href="/partner-program.html" data-carry-query>For partners</a><a class="button button-small" href="/apply.html" data-carry-query>Get Business Funding</a></nav></details></div></header>
+<main id="main" class="container apply">
+  <noscript><p class="marker">Enable JavaScript to continue. This interactive demonstration needs JavaScript to show the application and validation.</p></noscript>
+  <aside class="apply-aside">
+    <p class="eyebrow">ISO &amp; referral partner demo</p>
+    <p class="apply-heading">Partner application</p>
+    <p class="apply-aside-copy">Use a fictional organization to explore the application and review process.</p>
+    <div class="apply-aside-copy marker"><strong>Fictional organizations only</strong><p>The demo provides five fixed identities. Synthetic submissions are stored on the demo server.</p></div>
+  </aside>
+  <div class="apply-content">
+    <form id="partner-form" class="sheet inquiry" novalidate hidden>
+      <h1 id="form-title" tabindex="-1">Demo partner application</h1>
+      <p class="step-intro">Tell us how the fictional organization works with small businesses.</p>
+      <div id="error-summary" class="error-summary" tabindex="-1" hidden></div>
+      <div id="form-body" class="step-body"></div>
+      <div class="form-actions"><button type="submit" id="submit" class="button">Submit demo application</button></div>
+    </form>
+    <p id="status" class="status" role="status"></p>
+  </div>
+</main>
+<footer class="site-footer"><div class="container"><p class="footer-brand">Greenwich Credit Partners</p><nav class="footer-nav" aria-label="Footer"><a href="/#solutions">Business needs</a><a href="/#how-it-works">Our approach</a><a href="/#questions">FAQs</a><a href="/partner-program.html" data-carry-query>For partners</a><a href="/admin/">View synthetic dashboard</a></nav><p>Demonstration prototype. Greenwich Credit Partners is not an operating brokerage or lender. No financing is offered or arranged. Synthetic submissions are stored on the demo server.</p><small>© 2026 Greenwich Credit Partners</small></div></footer>
+</body>
 </html>

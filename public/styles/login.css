@@ -1,24 +1,14 @@
-.login-page {
-  display: grid;
-  place-items: start center;
-  min-height: calc(100vh - 5rem);
-  padding-block: clamp(3rem, 8vw, 7rem);
-}
-.login-card {
-  width: min(100%, 32rem);
-  padding: clamp(1.5rem, 4vw, 2.5rem);
-}
-.login-card h1 { margin-bottom: var(--space-3); }
-.login-form { display: grid; gap: var(--space-4); margin-top: var(--space-5); }
-.login-form > div { display: grid; gap: var(--space-1); }
-.login-form label { font-weight: 700; }
-.login-form input {
-  width: 100%;
-  min-height: 2.875rem;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--ink-soft);
-  border-radius: var(--radius);
-  background: var(--sheet);
-  color: var(--ink);
-  font: inherit;
-}
+.login-header { background: var(--navy); border-color: var(--navy); }
+.login-header .brand { color: var(--sheet); }
+.login-header .brand::before { display: none; }
+.login-header .brand small { color: var(--on-dark-soft); }
+.login-page { display: grid; justify-items: center; align-content: start; padding-block: clamp(3rem, 6.7vw, 6rem); }
+.login-card { width: min(100%, 30rem); padding: clamp(1.25rem, 3.5vw, 2rem); border-radius: 14px; box-shadow: 0 2px 4px #14293b0a; }
+.login-card h1 { margin-top: 1rem; }
+.login-form { display: grid; gap: 1rem; margin-top: 1rem; }
+.login-form > div { display: grid; gap: .25rem; }
+.login-form label { font-size: .875rem; font-weight: 600; }
+.login-form .button { justify-self: start; }
+.login-card .fine { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+.login-card .status.is-error { padding: .75rem 1rem; border-radius: 6px; background: var(--error-tint); color: var(--error); }
+@media (max-width: 40rem) { .login-header .button { font-size: .875rem; min-height: 2.25rem; } }
