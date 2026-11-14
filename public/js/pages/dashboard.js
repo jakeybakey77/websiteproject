@@ -189,8 +189,8 @@ function renderRows() {
         })),
         el('td', { role: 'cell', class: 'wrap wide', text: labelFor(INDUSTRIES, lead.industry) }),
         el('td', { role: 'cell', text: lead.state }),
-        el('td', { role: 'cell', class: 'num', text: formatCurrency(lead.amountRequested) }),
-        el('td', { role: 'cell', class: 'num wide', text: formatCurrency(lead.monthlyRevenue) }),
+        el('td', { role: 'cell', class: 'num', text: answer(lead, 'amountRequested') }),
+        el('td', { role: 'cell', class: 'num wide', text: answer(lead, 'monthlyRevenue') }),
         el('td', { role: 'cell',}, stageTag(lead)),
         el('td', { role: 'cell', class: 'wide' }, validationTag(lead)),
         el('td', { role: 'cell', class: 'screening-reasons wide', text: lead.validation.flags.map((flag) => flag.ruleId).join(', ') || '—' }),
@@ -217,7 +217,7 @@ function answer(lead, name) {
   const field = FIELDS[name];
   const value = lead[name];
   if (value == null || value === '' || (Array.isArray(value) && value.length === 0)) return 'Not provided';
-  if (field.type === 'currency') return formatCurrency(value);
+  if (field.type === 'currency' || (field.acceptsLegacyCurrency && typeof value === 'number')) return formatCurrency(value);
   if (field.type === 'checkboxes') return value.map((v) => labelFor(field.options, v)).join(', ');
   if (field.options) return labelFor(field.options, value);
   return value;

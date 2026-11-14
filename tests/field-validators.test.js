@@ -26,7 +26,7 @@ test('optional fields may be left blank', () => {
 });
 
 test('amounts must be positive numbers', () => {
-  assert.match(validateField('amountRequested', { amountRequested: 'lots' }), /numbers only/);
+  assert.match(validateField('amountRequested', { amountRequested: 'lots' }), /select/i);
   assert.match(validateField('amountRequested', { amountRequested: '0' }), /greater than zero/);
   assert.equal(validateField('amountRequested', { amountRequested: '$40,000' }), null);
 });
@@ -39,7 +39,7 @@ test('conditional fields are only checked when shown', () => {
   const hidden = { hasExistingFinancing: 'no', existingFinancingBalance: 'not a number' };
   assert.equal(validateField('existingFinancingBalance', hidden), null);
   const shown = { hasExistingFinancing: 'yes', existingFinancingBalance: 'not a number' };
-  assert.match(validateField('existingFinancingBalance', shown), /numbers only/);
+  assert.match(validateField('existingFinancingBalance', shown), /select/i);
 });
 
 test('validateStep returns one message per problem field', () => {
