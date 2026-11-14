@@ -5,8 +5,19 @@ async function request(path, options = {}) {
   const headers = new Headers(options.headers || {});
   if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (options.method && options.method !== 'GET' && csrfToken) headers.set('X-CSRF-Token', csrfToken);
-  const response = await fetch(path, { ...options, headers, credentials: 'same-origin' });
-  const body = await response.json().catch(() => ({}));
+  const signal = AbortSignal.timeout(12000);
+  let response, body;
+  try {
+    response = await fetch(path, { ...options, headers, credentials: 'same-origin', signal });
+    body = await response.json();
+  } catch (error) {
+    if (signal.aborted) {
+      throw new Error(options.method === 'POST'
+        ? 'The request timed out. Reload the current status before trying again.'
+        : 'Loading timed out. Try loading again.');
+    }
+    throw new Error('Could not read the server response. Reload the page and try again.', { cause: error });
+  }
   if (response.status === 401) {
     location.assign('/admin/login.html');
     throw new Error('Authentication required.');
