@@ -269,6 +269,10 @@ function render({ moveFocus = true } = {}) {
 function readStep(step) {
   const data = new FormData(form);
   for (const name of step.fields) {
+    if (!isVisible(name, state.values)) {
+      delete state.values[name];
+      continue;
+    }
     const { type } = FIELDS[name];
     if (type === 'checkboxes') state.values[name] = data.getAll(name);
     else if (type === 'checkbox') state.values[name] = data.has(name);
@@ -325,7 +329,13 @@ body.addEventListener('change', () => {
   if (!step) return;
   readStep(step);
   for (const name of step.fields) {
-    document.getElementById(`field-${name}`).hidden = !isVisible(name, state.values);
+    const wrapper = document.getElementById(`field-${name}`);
+    wrapper.hidden = !isVisible(name, state.values);
+    if (!wrapper.hidden) continue;
+    for (const control of wrapper.querySelectorAll('input, select')) {
+      if (control.type === 'checkbox') control.checked = false;
+      else control.value = '';
+    }
   }
 });
 

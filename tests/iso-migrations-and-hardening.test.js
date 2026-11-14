@@ -29,7 +29,7 @@ test('a v2.0 database upgrades in place: merchant data kept, ISO tables added, m
   legacy.close();
 
   const db = openDatabase(path, { seed: true });
-  assert.equal(db.schemaVersion(), 3);
+  assert.equal(db.schemaVersion(), 4);
   assert.equal(db.listLeads().length, 1, 'existing leads are kept and the sample seed does not run over them');
   assert.equal(db.getLead('DEMO-LEGACY-1').stage, 'in_review');
   const audit = db.listAudit();
@@ -38,7 +38,7 @@ test('a v2.0 database upgrades in place: merchant data kept, ISO tables added, m
   const tables = db.raw.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'iso_%' ORDER BY name").all().map((r) => r.name);
   assert.deepEqual(tables, ['iso_activity', 'iso_contacts', 'iso_evidence', 'iso_import_batches', 'iso_import_rows', 'iso_organizations', 'iso_referral_codes', 'iso_score_snapshots']);
   assert.deepEqual(db.raw.prepare('SELECT version, name FROM schema_migrations ORDER BY version').all().map((r) => [Number(r.version), r.name]),
-    [[1, 'baseline_merchant_leads_sessions_audit'], [2, 'iso_partner_intelligence'], [3, 'iso_referral_tracking']]);
+    [[1, 'baseline_merchant_leads_sessions_audit'], [2, 'iso_partner_intelligence'], [3, 'iso_referral_tracking'], [4, 'merchant_funnel_context']]);
   db.close();
 
   // Reopening applies nothing new.
@@ -51,10 +51,10 @@ test('a failed migration rolls back and a newer-than-known schema refuses to sta
   const path = join(tempDir(t), 'm.sqlite');
   const raw = new DatabaseSync(path);
   runMigrations(raw);
-  const broken = [...MIGRATIONS, { version: 4, name: 'broken', sql: 'CREATE TABLE half_done (id INTEGER); CREATE TABLE iso_organizations (id TEXT);' }];
-  assert.throws(() => runMigrations(raw, broken), /Migration 4 \(broken\) failed and was rolled back/);
+  const broken = [...MIGRATIONS, { version: 5, name: 'broken', sql: 'CREATE TABLE half_done (id INTEGER); CREATE TABLE iso_organizations (id TEXT);' }];
+  assert.throws(() => runMigrations(raw, broken), /Migration 5 \(broken\) failed and was rolled back/);
   assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name = 'half_done'").get().n, 0);
-  assert.equal(Number(raw.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v), 3);
+  assert.equal(Number(raw.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v), 4);
   raw.prepare("INSERT INTO schema_migrations(version,name,applied_at) VALUES(99,'from_the_future','2027-01-01')").run();
   assert.throws(() => runMigrations(raw), /newer than this application/);
   raw.close();

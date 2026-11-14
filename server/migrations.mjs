@@ -329,10 +329,20 @@ const ISO_REFERRAL_TRACKING = `
   );
 `;
 
+const MERCHANT_FUNNEL_CONTEXT = `
+  CREATE TABLE lead_funnel_context (
+    lead_id TEXT PRIMARY KEY REFERENCES leads(id) ON DELETE CASCADE,
+    construction_payment_timing TEXT,
+    existing_financing_payment_frequency TEXT,
+    existing_financing_remaining_term TEXT
+  );
+`;
+
 export const MIGRATIONS = Object.freeze([
   { version: 1, name: 'baseline_merchant_leads_sessions_audit', sql: BASELINE },
   { version: 2, name: 'iso_partner_intelligence', sql: ISO_PARTNER_INTELLIGENCE },
   { version: 3, name: 'iso_referral_tracking', sql: ISO_REFERRAL_TRACKING },
+  { version: 4, name: 'merchant_funnel_context', sql: MERCHANT_FUNNEL_CONTEXT },
 ]);
 
 export function runMigrations(db, migrations = MIGRATIONS) {

@@ -67,6 +67,9 @@ function fromDbLead(row) {
     hasExistingFinancing: row.has_existing_financing,
     existingFinancingTypes: json(row.existing_financing_types_json, []),
     existingFinancingBalance: row.existing_financing_balance,
+    ...(row.construction_payment_timing != null && { constructionPaymentTiming: row.construction_payment_timing }),
+    ...(row.existing_financing_payment_frequency != null && { existingFinancingPaymentFrequency: row.existing_financing_payment_frequency }),
+    ...(row.existing_financing_remaining_term != null && { existingFinancingRemainingTerm: row.existing_financing_remaining_term }),
     demoAcknowledged: row.demo_acknowledged === 1,
     stage: row.stage,
     followUpReason: row.follow_up_reason,
@@ -114,6 +117,17 @@ export function openDatabase(path, { seed = false, publicBaseUrl = '' } = {}) {
     }
   }
 
+  const tx = createTx(db);
+  const selectLeads = `
+    SELECT leads.*, context.construction_payment_timing, context.existing_financing_payment_frequency,
+      context.existing_financing_remaining_term
+    FROM leads LEFT JOIN lead_funnel_context context ON context.lead_id = leads.id
+  `;
+  const insertFunnelContext = db.prepare(`
+    INSERT INTO lead_funnel_context (
+      lead_id, construction_payment_timing, existing_financing_payment_frequency, existing_financing_remaining_term
+    ) VALUES (?, ?, ?, ?)
+  `);
   const api = {
     raw: db,
     close() {
@@ -122,14 +136,21 @@ export function openDatabase(path, { seed = false, publicBaseUrl = '' } = {}) {
       db.close();
     },
     listLeads() {
-      return db.prepare('SELECT * FROM leads ORDER BY received_at DESC, id DESC').all().map(fromDbLead);
+      return db.prepare(selectLeads + ' ORDER BY leads.received_at DESC, leads.id DESC').all().map(fromDbLead);
     },
     getLead(id) {
-      return fromDbLead(db.prepare('SELECT * FROM leads WHERE id = ?').get(id));
+      return fromDbLead(db.prepare(selectLeads + ' WHERE leads.id = ?').get(id));
     },
     insertLead(lead) {
-      insertLead.run(toDbLead(lead));
-      return this.getLead(lead.id);
+      return tx(() => {
+        const inserted = insertLead.run(toDbLead(lead));
+        const context = [lead.constructionPaymentTiming ?? null, lead.existingFinancingPaymentFrequency ?? null,
+          lead.existingFinancingRemainingTerm ?? null];
+        if (inserted.changes && context.some((value) => value != null)) {
+          insertFunnelContext.run(lead.id, ...context);
+        }
+        return this.getLead(lead.id);
+      });
     },
     updateLeadReview(lead) {
       const row = toDbLead(lead);
@@ -196,7 +217,6 @@ export function openDatabase(path, { seed = false, publicBaseUrl = '' } = {}) {
   };
   // Both stores write through one connection and share one transaction owner, so a
   // stage change and the referral-code revocation it triggers commit (or roll back) together.
-  const tx = createTx(db);
   const audit = (entry) => api.audit(entry);
   api.iso = createIsoStore(db, { audit, tx, onLeaveActivePartner: (event) => api.referrals.revokeForStageChange(event) });
   api.referrals = createReferralStore(db, {

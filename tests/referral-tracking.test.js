@@ -73,11 +73,11 @@ test('migration 3 upgrades a v2.1 database in place, keeps every row, and is rec
   legacy.close();
 
   const db = openDatabase(path, { seed: true });
-  assert.equal(db.schemaVersion(), 3);
+  assert.equal(db.schemaVersion(), 4);
   assert.equal(dump(db.raw), before, 'no historic lead, partner or audit row changed');
   assert.deepEqual(tableCounts(db), { leads: 1, lead_referrals: 0, lead_referral_events: 0, lead_submission_keys: 0, audit_log: 1 });
   assert.equal(db.referrals.leadSummaries().size, 0, 'a pre-v2.3 inquiry stays direct');
-  assert.deepEqual(db.raw.prepare('SELECT version, name FROM schema_migrations ORDER BY version').all().map((r) => [Number(r.version), r.name]).at(-1), [3, 'iso_referral_tracking']);
+  assert.deepEqual(db.raw.prepare('SELECT version, name FROM schema_migrations ORDER BY version').all().map((r) => [Number(r.version), r.name]).find(([version]) => version === 3), [3, 'iso_referral_tracking']);
   // Mixed history: analytics work over an unattributed v2.1 inquiry.
   const stats = db.referrals.analytics();
   assert.deepEqual([stats.totalMerchantInquiries, stats.referredInquiries, stats.directOrUnattributedInquiries], [1, 0, 1]);
@@ -100,7 +100,7 @@ test('migration 3 rolls back completely when it fails part-way', (t) => {
   assert.throws(() => runMigrations(raw, broken), /Migration 3 \(iso_referral_tracking\) failed and was rolled back/);
   assert.equal(Number(raw.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name IN ('iso_referral_codes','lead_referrals','lead_referral_events','lead_submission_keys')").get().n), 0);
   assert.equal(Number(raw.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v), 2);
-  assert.deepEqual(runMigrations(raw), [3], 'the real migration then applies cleanly');
+  assert.deepEqual(runMigrations(raw, MIGRATIONS.slice(0, 3)), [3], 'the real migration then applies cleanly');
   raw.close();
 });
 
@@ -819,7 +819,7 @@ test('real process: a referred inquiry survives SIGTERM and its retry still retu
   };
 
   const first = await boot();
-  assert.match(first.output(), /schema v3/);
+  assert.match(first.output(), /schema v4/);
   const admin = await login(base);
   const id = await onboard(admin, base);
   const code = (await ok(issue(admin, id), 201)).code;
