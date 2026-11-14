@@ -119,6 +119,25 @@ try {
   await finishPageLoad();
   await visible(page.locator('#lead-rows .inquiry-name').first());
   await openReferrals(ineligible);
+  await visible(page.getByText(/Missing:.*Active Partner.*Overview.*Verified by reviewer.*Verification/));
+  await visible(page.getByText(/^Page 1 of 1 ·/));
+  assert.equal(await btn('Next page').count(), 0);
+  assert.equal(await btn('Previous page').count(), 0);
+  await picture('v24-ineligible');
+  await page.route('**/api/admin/iso/organizations/*/referrals?*', async route => {
+    const response = await route.fetch();
+    const body = await response.json();
+    await route.fulfill({response, json: {...body, pageSize: 1, total: 2}});
+  });
+  await openReferrals(ineligible);
+  await visible(page.getByText(/^Page 1 of 2 ·/));
+  assert.ok(await btn('Previous page').isDisabled());
+  await btn('Next page').click();
+  await visible(page.getByText(/^Page 2 of 2 ·/));
+  assert.ok(await btn('Next page').isDisabled());
+  await btn('Previous page').click();
+  await visible(page.getByText(/^Page 1 of 2 ·/));
+  await page.unroute('**/api/admin/iso/organizations/*/referrals?*');
   assert.ok(await btn('Issue demo referral link').isDisabled());
   await waitText('Available only while the partner is Active and Verified.');
   await openReferrals(a);
@@ -131,7 +150,7 @@ try {
   await waitText('Referral link copied.');
   assert.ok(await page.evaluate(() => navigator.clipboard.readText()) === firstUrl, 'Clipboard contains the link');
   await fits();
-  await picture('desktop-iso-referrals');
+  await picture('v24-eligible');
 
   const firstCode = new URL(firstUrl).searchParams.get('ref');
   const arrival = '/?ref=' + encodeURIComponent(firstCode) + '&utm_source=meta_ads&utm_medium=cpc&utm_campaign=gate-b';
