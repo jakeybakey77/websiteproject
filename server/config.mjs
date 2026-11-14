@@ -64,6 +64,21 @@ if (production) {
   }
 }
 
+/**
+ * The only source for an absolute referral link. Must be a bare origin: https, or http on
+ * a loopback host for local demos. Request headers (Host, X-Forwarded-Host) are never used.
+ * Unset means referral links are returned as relative paths.
+ */
+export function parsePublicOrigin(raw) {
+  if (raw == null || String(raw).trim() === '') return '';
+  let url;
+  try { url = new URL(String(raw).trim()); } catch { throw new Error('GCP_PUBLIC_ORIGIN must be an absolute origin such as https://demo.example.'); }
+  const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback)) throw new Error('GCP_PUBLIC_ORIGIN must use https (http is allowed only for localhost).');
+  if (url.username || url.password || url.search || url.hash || url.pathname !== '/') throw new Error('GCP_PUBLIC_ORIGIN must be an origin only: no path, query, fragment or credentials.');
+  return url.origin;
+}
+
 export const config = Object.freeze({
   port: int('PORT', 4173),
   host: process.env.HOST || '0.0.0.0',
@@ -77,6 +92,7 @@ export const config = Object.freeze({
   sessionTtlMs: int('SESSION_TTL_HOURS', 8) * 60 * 60 * 1000,
   cookieSecure: bool('COOKIE_SECURE', production),
   maxBodyBytes: int('MAX_BODY_BYTES', 64 * 1024),
+  publicBaseUrl: parsePublicOrigin(process.env.GCP_PUBLIC_ORIGIN ?? process.env.PUBLIC_BASE_URL),
   generatedAdminPassword,
   generatedSessionSecret,
 });

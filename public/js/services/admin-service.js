@@ -10,7 +10,7 @@ async function request(path, options = {}) {
     location.assign('/admin/login.html');
     throw new Error('Authentication required.');
   }
-  if (!response.ok) throw new Error(body.error || 'Request failed.');
+  if (!response.ok) throw Object.assign(new Error(body.error || 'Request failed.'), { status: response.status });
   return body;
 }
 
@@ -37,4 +37,19 @@ export async function logout() {
   await request('/api/auth/logout', { method: 'POST' });
   csrfToken = '';
   location.assign('/admin/login.html');
+}
+
+export async function getLeadReferral(id) {
+  return (await request('/api/admin/leads/' + encodeURIComponent(id) + '/referral')).referral;
+}
+
+export function saveLeadReferral(id, payload) {
+  return request('/api/admin/leads/' + encodeURIComponent(id) + '/referral', {
+    method: 'POST', body: JSON.stringify(payload),
+  });
+}
+
+export async function listEligibleReferralPartners() {
+  const body = await request('/api/admin/iso/organizations?stage=active_partner&verification=verified');
+  return body.organizations;
 }

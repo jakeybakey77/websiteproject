@@ -75,10 +75,12 @@
             <label for="reason">Review flag</label>
             <select id="reason" name="reason"><option value="">All review flags</option></select>
           </div>
+          <div><label for="referred-by">Referred by</label><select id="referred-by" name="referredBy"><option value="">All referrals</option><option value="direct">Direct / unattributed</option></select></div>
           <button type="reset" class="button button-quiet button-small">Clear filters</button>
           <button type="button" id="export-csv" class="button button-secondary button-small">Export filtered demo CSV</button>
         </form>
 
+        <button id="referral-sort-mobile" class="button button-quiet button-small" type="button">Sort by referred by</button>
         <div id="active-filters" class="active-filters" aria-label="Active filters"></div>
         <p id="review-status" class="result-count" role="status" aria-live="polite"></p>
         <p id="result-count" class="result-count" role="status"></p>
@@ -97,6 +99,7 @@
                 <th role="columnheader" scope="col" class="wide">Validation</th>
                 <th role="columnheader" scope="col" class="wide">Reason codes</th>
                 <th role="columnheader" scope="col">Source</th>
+                <th id="referral-sort-heading" role="columnheader" scope="col"><button id="referral-sort" class="link-button" type="button">Referred by <span aria-hidden="true">↕</span></button></th>
                 <th role="columnheader" scope="col" class="wide">Received</th>
                 <th role="columnheader" scope="col"><span class="visually-hidden">Details</span></th>
               </tr>

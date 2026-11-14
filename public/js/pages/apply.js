@@ -7,6 +7,8 @@ import { DEMO_IDENTITIES } from '../data/demo-identities.js';
 import { el } from '../lib/dom.js';
 import { isVisible, normalizeAnswers, validateStep } from '../lib/field-validators.js';
 import { formatCurrency, labelFor } from '../lib/format.js';
+import { readReferralParam, REFERRAL_PARAM } from '../lib/referral-code.js';
+import { updateCampaignLinks } from '../lib/referral-query.js';
 import { submitInquiry } from '../services/lead-service.js';
 
 const REVIEW = STEPS.length; // the review screen comes after the last step
@@ -28,6 +30,38 @@ const state = { index: 0, values: {}, identityIndex: 0, reachedReview: false };
 // Where the visitor came from, e.g. apply.html?utm_source=google_search&utm_campaign=spring
 const params = new URLSearchParams(location.search);
 const attribution = parseAttribution(params);
+let referral = readReferralParam(params);
+let submissionId;
+let sending = false;
+const banner = document.getElementById('referral-banner');
+
+function renderReferral({ focus = false } = {}) {
+  banner.hidden = referral.status === 'none';
+  banner.replaceChildren();
+  if (banner.hidden) return;
+  const invalid = referral.status === 'invalid';
+  banner.className = invalid ? 'referral-banner is-error' : 'referral-banner';
+  banner.append(el('p', {
+    id: 'referral-state-message', role: invalid ? 'alert' : 'status',
+    text: invalid ? 'This referral link is invalid or unavailable. Remove it to continue as a direct demo inquiry.'
+      : 'Referral link detected (demo)',
+  }), el('button', {
+    type: 'button', class: 'button button-secondary',
+    text: 'Remove referral and continue directly', 'aria-describedby': 'referral-state-message',
+    onclick: () => {
+      referral = { status: 'none' };
+      submissionId = undefined;
+      const url = new URL(location.href);
+      url.searchParams.delete(REFERRAL_PARAM);
+      history.replaceState(history.state, '', url);
+      updateCampaignLinks(url.searchParams);
+      renderReferral();
+      status.textContent = 'Referral removed. This will be a direct demo inquiry.';
+      title.focus();
+    },
+  }));
+  if (focus) banner.querySelector('button').focus();
+}
 
 const identity = () => DEMO_IDENTITIES[state.identityIndex];
 const row = (label, value) => el('div', {}, el('dt', { text: label }), el('dd', { text: value }));
@@ -153,6 +187,7 @@ function renderIdentity() {
       class: 'button button-quiet button-small',
       text: 'Use a different fictional contact',
       onclick: (event) => {
+        submissionId = undefined;
         state.identityIndex = (state.identityIndex + 1) % DEMO_IDENTITIES.length;
         const next = renderIdentity();
         event.target.closest('.identity').replaceWith(next);
@@ -284,6 +319,7 @@ function goTo(index) {
 }
 
 // Show or hide conditional fields as answers change.
+body.addEventListener('input', () => { submissionId = undefined; });
 body.addEventListener('change', () => {
   const step = STEPS[state.index];
   if (!step) return;
@@ -300,6 +336,7 @@ backButton.addEventListener('click', () => {
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
+  if (sending) return;
   if (state.index === REVIEW) {
     await send();
     return;
@@ -314,14 +351,49 @@ form.addEventListener('submit', async (event) => {
 // Simulated submission -----------------------------------------------------------
 
 async function send() {
+  if (referral.status === 'invalid') {
+    renderReferral({ focus: true });
+    return;
+  }
+  submissionId ??= crypto.randomUUID();
+  sending = true;
   nextButton.disabled = backButton.disabled = true;
+  const removeButton = banner.querySelector('button');
+  if (removeButton) removeButton.disabled = true;
+  for (const button of body.querySelectorAll('button')) button.disabled = true;
   status.textContent = 'Submitting demo inquiry…';
   try {
-    const lead = await submitInquiry(normalizeAnswers(state.values), { identity: identity(), ...attribution });
+    const lead = await submitInquiry(normalizeAnswers(state.values), {
+      identity: identity(), ...attribution, referralCode: referral.code, submissionId,
+    });
+    referral = { status: 'none' };
+    renderReferral();
     showConfirmation(lead);
-  } catch {
+  } catch (error) {
+    status.textContent = '';
+    if (error.code === 'referral_unavailable') {
+      referral = { status: 'invalid' };
+      renderReferral({ focus: true });
+    } else if (error.code === 'submission_conflict') {
+      submissionId = crypto.randomUUID();
+      status.textContent = 'The earlier submission has different details. Select Submit demo inquiry to send these answers as a new inquiry.';
+    } else if (error.fieldErrors && Object.keys(error.fieldErrors).length) {
+      const step = STEPS.findIndex(({ fields }) => fields.some((name) => error.fieldErrors[name]));
+      if (step >= 0) {
+        goTo(step);
+        showErrors(Object.fromEntries(STEPS[step].fields.filter((name) => error.fieldErrors[name])
+          .map((name) => [name, error.fieldErrors[name]])));
+      } else {
+        status.textContent = error.message;
+      }
+    } else {
+      status.textContent = 'The submission could not be confirmed. Your answers are still here. Select Submit demo inquiry to retry.';
+    }
+  } finally {
+    sending = false;
     nextButton.disabled = backButton.disabled = false;
-    status.textContent = 'The demo inquiry was not submitted. Reload the page and try again.';
+    if (removeButton) removeButton.disabled = false;
+    for (const button of body.querySelectorAll('button')) button.disabled = false;
   }
 }
 
@@ -329,8 +401,10 @@ function showConfirmation(lead) {
   const confirmation = el(
     'section',
     { class: 'sheet confirmation' },
-    el('h1', { tabindex: -1, text: 'Demo inquiry submitted' }),
+    el('h1', { tabindex: -1, text: 'Demo inquiry submitted',
+      'aria-describedby': lead.referralAttribution?.recorded === true ? 'referral-recorded' : null }),
     el('p', {}, 'Reference: ', el('strong', { text: lead.id })),
+    lead.referralAttribution?.recorded === true && el('p', { id: 'referral-recorded', class: 'referral-recorded', text: 'Referral recorded' }),
     el('p', {
       class: 'marker',
       text: 'This was a simulation using fictional contact details. No funding request was sent to a lender and no one will contact you.',
@@ -354,5 +428,6 @@ function showConfirmation(lead) {
   confirmation.querySelector('h1').focus();
 }
 
+renderReferral();
 render({ moveFocus: false });
 form.hidden = false;

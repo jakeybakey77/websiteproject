@@ -5,6 +5,8 @@ import { createHash } from 'node:crypto';
 import { sampleLeads } from '../public/js/data/sample-leads.js';
 import { runMigrations, schemaVersion } from './migrations.mjs';
 import { createIsoStore } from './iso-store.mjs';
+import { createReferralStore } from './referral-store.mjs';
+import { createTx } from './tx.mjs';
 
 const json = (value, fallback) => {
   if (value == null || value === '') return fallback;
@@ -81,7 +83,7 @@ function fromDbLead(row) {
   };
 }
 
-export function openDatabase(path, { seed = false } = {}) {
+export function openDatabase(path, { seed = false, publicBaseUrl = '' } = {}) {
   mkdirSync(dirname(path), { recursive: true });
   const db = new DatabaseSync(path);
   db.exec('PRAGMA journal_mode = WAL;');
@@ -172,9 +174,9 @@ export function openDatabase(path, { seed = false } = {}) {
     deleteSession(tokenHash) {
       db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(tokenHash);
     },
-    audit({ actor, action, leadId = null, isoOrgId = null, detail = {} }) {
+    audit({ actor, action, leadId = null, isoOrgId = null, detail = {}, at = new Date().toISOString() }) {
       db.prepare('INSERT INTO audit_log(actor,action,lead_id,iso_organization_id,detail_json,at) VALUES(?,?,?,?,?,?)')
-        .run(actor, action, leadId, isoOrgId, JSON.stringify(detail), new Date().toISOString());
+        .run(actor, action, leadId, isoOrgId, JSON.stringify(detail), at);
     },
     listAudit(limit = 100) {
       const safe = Math.max(1, Math.min(500, Number(limit) || 100));
@@ -192,7 +194,17 @@ export function openDatabase(path, { seed = false } = {}) {
     /** Cheap liveness probe for /healthz: proves the database file is readable. */
     ping() { return Number(db.prepare('SELECT 1 AS ok').get().ok) === 1; },
   };
-  api.iso = createIsoStore(db, { audit: (entry) => api.audit(entry) });
+  // Both stores write through one connection and share one transaction owner, so a
+  // stage change and the referral-code revocation it triggers commit (or roll back) together.
+  const tx = createTx(db);
+  const audit = (entry) => api.audit(entry);
+  api.iso = createIsoStore(db, { audit, tx, onLeaveActivePartner: (event) => api.referrals.revokeForStageChange(event) });
+  api.referrals = createReferralStore(db, {
+    audit, tx, publicBaseUrl,
+    insertLead: (lead) => api.insertLead(lead),
+    getLead: (id) => api.getLead(id),
+    recordIsoActivity: (id, entry) => api.iso.recordActivity(id, entry),
+  });
   return api;
 }
 

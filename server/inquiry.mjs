@@ -3,6 +3,7 @@ import { DEMO_IDENTITIES } from '../public/js/data/demo-identities.js';
 import { STEPS } from '../public/js/config/form-schema.js';
 import { normalizeAnswers, validateStep } from '../public/js/lib/field-validators.js';
 import { normalizeSource, sanitizeAttribution } from '../public/js/lib/attribution.js';
+import { isWellFormedReferralCode, isWellFormedSubmissionId } from '../public/js/lib/referral-code.js';
 
 function demoIdentityMatches(identity) {
   if (!identity || typeof identity !== 'object') return false;
@@ -31,9 +32,23 @@ export function validateInquiryPayload(payload, { demoMode = true } = {}) {
     throw Object.assign(new Error('Demo acknowledgement is required.'), { statusCode: 422 });
   }
 
+  // Optional v2.3 fields. Absent (or null) means a normal direct inquiry / a legacy client.
+  // Anything present but malformed is refused rather than guessed at: an array, a repeated
+  // value or a wrong-shaped code never falls back to "direct" or to some other partner.
+  const referralCode = payload.referralCode ?? null;
+  if (referralCode !== null && !isWellFormedReferralCode(referralCode)) {
+    throw Object.assign(new Error('This referral link is not valid. Remove the referral code to continue as a direct demo inquiry.'), { statusCode: 422, errorCode: 'referral_unavailable' });
+  }
+  const submissionId = payload.submissionId ?? null;
+  if (submissionId !== null && !isWellFormedSubmissionId(submissionId)) {
+    throw Object.assign(new Error('submissionId must be a UUID or a random string of 16 to 64 characters.'), { statusCode: 422 });
+  }
+
   return {
     answers,
     identity: payload.identity,
+    referralCode,
+    submissionId,
     attribution: {
       source: normalizeSource(payload.source),
       medium: sanitizeAttribution(payload.medium, 60).toLowerCase(),

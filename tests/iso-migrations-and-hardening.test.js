@@ -29,16 +29,16 @@ test('a v2.0 database upgrades in place: merchant data kept, ISO tables added, m
   legacy.close();
 
   const db = openDatabase(path, { seed: true });
-  assert.equal(db.schemaVersion(), 2);
+  assert.equal(db.schemaVersion(), 3);
   assert.equal(db.listLeads().length, 1, 'existing leads are kept and the sample seed does not run over them');
   assert.equal(db.getLead('DEMO-LEGACY-1').stage, 'in_review');
   const audit = db.listAudit();
   assert.equal(audit.length, 1);
   assert.equal(audit[0].isoOrganizationId, null);
   const tables = db.raw.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'iso_%' ORDER BY name").all().map((r) => r.name);
-  assert.deepEqual(tables, ['iso_activity', 'iso_contacts', 'iso_evidence', 'iso_import_batches', 'iso_import_rows', 'iso_organizations', 'iso_score_snapshots']);
+  assert.deepEqual(tables, ['iso_activity', 'iso_contacts', 'iso_evidence', 'iso_import_batches', 'iso_import_rows', 'iso_organizations', 'iso_referral_codes', 'iso_score_snapshots']);
   assert.deepEqual(db.raw.prepare('SELECT version, name FROM schema_migrations ORDER BY version').all().map((r) => [Number(r.version), r.name]),
-    [[1, 'baseline_merchant_leads_sessions_audit'], [2, 'iso_partner_intelligence']]);
+    [[1, 'baseline_merchant_leads_sessions_audit'], [2, 'iso_partner_intelligence'], [3, 'iso_referral_tracking']]);
   db.close();
 
   // Reopening applies nothing new.
@@ -51,10 +51,10 @@ test('a failed migration rolls back and a newer-than-known schema refuses to sta
   const path = join(tempDir(t), 'm.sqlite');
   const raw = new DatabaseSync(path);
   runMigrations(raw);
-  const broken = [...MIGRATIONS, { version: 3, name: 'broken', sql: 'CREATE TABLE half_done (id INTEGER); CREATE TABLE iso_organizations (id TEXT);' }];
-  assert.throws(() => runMigrations(raw, broken), /Migration 3 \(broken\) failed and was rolled back/);
+  const broken = [...MIGRATIONS, { version: 4, name: 'broken', sql: 'CREATE TABLE half_done (id INTEGER); CREATE TABLE iso_organizations (id TEXT);' }];
+  assert.throws(() => runMigrations(raw, broken), /Migration 4 \(broken\) failed and was rolled back/);
   assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name = 'half_done'").get().n, 0);
-  assert.equal(Number(raw.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v), 2);
+  assert.equal(Number(raw.prepare('SELECT MAX(version) AS v FROM schema_migrations').get().v), 3);
   raw.prepare("INSERT INTO schema_migrations(version,name,applied_at) VALUES(99,'from_the_future','2027-01-01')").run();
   assert.throws(() => runMigrations(raw), /newer than this application/);
   raw.close();
@@ -176,7 +176,7 @@ test('production start-up fails closed on missing, weak or placeholder secrets',
   // Run from an empty directory so no local .env file can supply values.
   const tempCwd = mkdtempSync(join(tmpdir(), 'gcp-cfg-'));
   try {
-    const importPath = JSON.stringify(join(root, 'server/config.mjs'));
+    const importPath = JSON.stringify(new URL('../server/config.mjs', import.meta.url).href);
     const exec = (env) => spawnSync(process.execPath, ['--input-type=module', '-e', `await import(${importPath}); console.log('started')`],
       { cwd: tempCwd, env: { PATH: process.env.PATH, NODE_ENV: 'production', ...env }, encoding: 'utf8' });
     const strong = { ADMIN_PASSWORD: 'a-long-unique-demo-passphrase', SESSION_SECRET: 'k'.repeat(48) };
@@ -223,8 +223,13 @@ test('real process: honours PORT, serves /healthz, shuts down cleanly on SIGTERM
   const stop = async (proc) => {
     proc.child.kill('SIGTERM');
     const result = await Promise.race([proc.exited, new Promise((resolve) => setTimeout(() => resolve({ code: 'timeout' }), 8000))]);
-    assert.deepEqual(result, { code: 0, signal: null }, proc.output());
-    assert.match(proc.output(), /Shutdown complete/);
+    if (process.platform === 'win32') {
+      // Windows terminates the child directly. The restart below still verifies WAL recovery.
+      assert.deepEqual(result, { code: null, signal: 'SIGTERM' }, proc.output());
+    } else {
+      assert.deepEqual(result, { code: 0, signal: null }, proc.output());
+      assert.match(proc.output(), /Shutdown complete/);
+    }
   };
 
   const first = await boot();
@@ -237,7 +242,9 @@ test('real process: honours PORT, serves /healthz, shuts down cleanly on SIGTERM
   const lead = await merchant.json();
   await stop(first);
   // After a clean shutdown the WAL has been folded into the main database file.
-  assert.ok(!readdirSync(join(dir, 'data')).some((name) => name.endsWith('-wal')), 'no WAL file left behind');
+  if (process.platform !== 'win32') {
+    assert.ok(!readdirSync(join(dir, 'data')).some((name) => name.endsWith('-wal')), 'no WAL file left behind');
+  }
 
   const second = await boot();
   t.after(() => second.child.kill('SIGKILL'));

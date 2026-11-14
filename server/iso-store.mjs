@@ -10,6 +10,7 @@ import {
 } from '../public/js/config/iso-pipeline.js';
 import { isNearName, isSyntheticEmail, nameKey, normalizeDomain, normalizeSyntheticPhone, normalizeSyntheticUrl } from '../public/js/lib/synthetic-identity.js';
 import { CURRENT_RULES_VERSION, computeIsoScore } from './iso-scoring.mjs';
+import { createTx } from './tx.mjs';
 import { IMPORT_FIELDS, IMPORT_LIMITS, decodeCsvUpload, fileHash, parseCsv, resolveMapping, validateImportRow } from './iso-csv.mjs';
 
 const fail = (statusCode, message, fieldErrors) => Object.assign(new Error(message), { statusCode, ...(fieldErrors ? { fieldErrors } : {}) });
@@ -88,17 +89,12 @@ const importRowFromRow = (row) => ({
   resolvedBy: row.resolved_by, resolvedAt: row.resolved_at, resolutionNote: row.resolution_note,
 });
 
-export function createIsoStore(db, { audit }) {
+export function createIsoStore(db, { audit, tx: sharedTx, onLeaveActivePartner = null }) {
   const clock = () => new Date().toISOString();
-  let depth = 0;
   // Every multi-statement change is atomic: a crash or restart mid-operation leaves
-  // either the whole change or none of it. Nested calls join the outer transaction.
-  function tx(fn) {
-    if (depth > 0) return fn();
-    db.exec('BEGIN IMMEDIATE');
-    depth += 1;
-    try { const result = fn(); db.exec('COMMIT'); return result; } catch (error) { db.exec('ROLLBACK'); throw error; } finally { depth -= 1; }
-  }
+  // either the whole change or none of it. Nested calls join the outer transaction,
+  // including calls into other stores that share this connection's helper.
+  const tx = sharedTx ?? createTx(db);
 
   const getOrgRow = (id) => db.prepare('SELECT * FROM iso_organizations WHERE id = ?').get(String(id));
   function requireOrg(id) {
@@ -115,7 +111,7 @@ export function createIsoStore(db, { audit }) {
       .run(orgId, type, body, JSON.stringify(detail), dueOn, actor, now);
     return Number(result.lastInsertRowid);
   }
-  const record = (orgId, action, actor, detail = {}) => audit({ actor, action, isoOrgId: orgId, detail });
+  const record = (orgId, action, actor, detail = {}, at) => audit({ actor, action, isoOrgId: orgId, detail, at });
 
   // Scoring ------------------------------------------------------------------
   const lastComputed = (orgId) => db.prepare("SELECT * FROM iso_score_snapshots WHERE organization_id = ? AND kind = 'computed' ORDER BY id DESC LIMIT 1").get(orgId);
@@ -238,6 +234,13 @@ export function createIsoStore(db, { audit }) {
 
     getOrganization: (id) => requireOrg(id),
 
+    /** Timeline entry written on behalf of another store that shares this connection. */
+    recordActivity(id, { type, body = '', detail = {}, actor, now = clock() }) {
+      const activityId = logActivity(id, { type, body, detail, actor, now });
+      touch(id, now);
+      return activityId;
+    },
+
     getOrganizationDetail(id) {
       const organization = requireOrg(id);
       const snapshots = db.prepare('SELECT * FROM iso_score_snapshots WHERE organization_id = ? ORDER BY id DESC LIMIT 100').all(id).map(snapshotFromRow);
@@ -269,9 +272,13 @@ export function createIsoStore(db, { audit }) {
         if ((STAGES_REQUIRING_NOTE.includes(stage) || reopening) && note.length < 10) throw fail(422, 'A note of at least 10 characters is required for this stage change.');
         let reason = '';
         if (stage === 'disqualified') reason = oneOf(input?.reason, DISQUALIFY_REASONS, 'Disqualification reason');
+        // Leaving the active stage ends referral eligibility. Demo referral links are revoked
+        // inside this same transaction, attributed to the acting reviewer, before the stage is
+        // written (a schema trigger would otherwise revoke them anonymously as a backstop).
+        if (org.stage === 'active_partner' && onLeaveActivePartner) onLeaveActivePartner({ organizationId: id, actor, now, stageBefore: org.stage, stageAfter: stage });
         db.prepare('UPDATE iso_organizations SET stage=?, disqualify_reason=?, updated_at=? WHERE id=?').run(stage, reason, now, id);
         logActivity(id, { type: 'stage_change', body: note, actor, now, detail: { from: org.stage, to: stage, reason } });
-        record(id, 'iso_stage_changed', actor, { stageBefore: org.stage, stageAfter: stage, reason });
+        record(id, 'iso_stage_changed', actor, { stageBefore: org.stage, stageAfter: stage, reason }, now);
         return requireOrg(id);
       });
     },

@@ -13,6 +13,7 @@ const EXPORT_COLUMNS = ['id', 'displayName', 'domain', 'region', 'relationshipTy
 
 export async function handleIsoAdmin({ req, res, path, url, session, db }) {
   const iso = db.iso;
+  const referrals = db.referrals;
   const actor = session.username;
   const sub = path.slice('/api/admin/iso'.length) || '/';
   const get = req.method === 'GET';
@@ -26,7 +27,8 @@ export async function handleIsoAdmin({ req, res, path, url, session, db }) {
   if (get && sub === '/organizations') {
     json(res, 200, { organizations: iso.listOrganizations(Object.fromEntries(url.searchParams)) });
   } else if (get && sub === '/analytics') {
-    json(res, 200, { analytics: iso.analytics() });
+    // Partner counts as before, plus referral counts for an optional ?from=&to= window.
+    json(res, 200, { analytics: { ...iso.analytics(), referrals: db.referrals.analytics(Object.fromEntries(url.searchParams)) } });
   } else if (get && sub === '/score-rules') {
     json(res, 200, { currentVersion: CURRENT_RULES_VERSION, rules: SCORE_RULES[CURRENT_RULES_VERSION] });
   } else if (get && sub === '/export.csv') {
@@ -47,6 +49,18 @@ export async function handleIsoAdmin({ req, res, path, url, session, db }) {
     json(res, 200, iso.getImport(m[1]));
   } else if (post && (m = sub.match(/^\/import-rows\/(\d+)\/resolve$/))) {
     json(res, 200, { row: iso.resolveImportRow(m[1], await body(), actor) });
+  } else if (get && (m = sub.match(/^\/organizations\/([^/]+)\/referral-codes$/))) {
+    json(res, 200, referrals.listCodes(m[1]));
+  } else if (post && (m = sub.match(/^\/organizations\/([^/]+)\/referral-codes$/))) {
+    await body();
+    const result = referrals.issueCode(m[1], actor);
+    json(res, result.created ? 201 : 200, result);
+  } else if (post && (m = sub.match(/^\/organizations\/([^/]+)\/referral-codes\/rotate$/))) {
+    json(res, 201, referrals.rotateCode(m[1], await body(), actor));
+  } else if (post && (m = sub.match(/^\/referral-codes\/([^/]+)\/revoke$/))) {
+    json(res, 200, referrals.revokeCode(m[1], await body(), actor));
+  } else if (get && (m = sub.match(/^\/organizations\/([^/]+)\/referrals$/))) {
+    json(res, 200, referrals.listForOrganization(m[1], Object.fromEntries(url.searchParams)));
   } else if (get && (m = sub.match(/^\/organizations\/([^/]+)$/))) {
     json(res, 200, detail(m[1]));
   } else if (post && (m = sub.match(/^\/organizations\/([^/]+)\/(stage|verification|assign|contacts|evidence|activities|score\/recalculate|score\/override|score\/override\/clear)$/))) {

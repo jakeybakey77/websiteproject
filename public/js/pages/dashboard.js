@@ -13,6 +13,7 @@ import { formatCurrency, formatDate, labelFor } from '../lib/format.js';
 import { countBy, filterLeads } from '../lib/lead-stats.js';
 import { buildScreeningInsights, buildWorkflowInsights } from '../lib/lead-insights.js';
 import { OUTCOMES, OUTCOME_LABELS } from '../lib/validation-engine.js';
+import { leadReferralPanel, referralPartnerLink } from './lead-referral-panel.js';
 import { listLeads, loadAdminSession, logout, saveReview } from '../services/admin-service.js';
 import { MAX_REVIEW_NOTE, allowedNextStages, requiresReviewReason } from '../lib/review-workflow.js';
 
@@ -26,11 +27,46 @@ const empty = document.getElementById('empty');
 const dialog = document.getElementById('lead-dialog');
 const reviewStatus = document.getElementById('review-status');
 let dialogLeadId = null;
+let referralSort = '';
+const referralFilter = document.getElementById('referred-by');
+const sortButton = document.getElementById('referral-sort');
+const mobileSortButton = document.getElementById('referral-sort-mobile');
+
+function visibleLeads(criteria) {
+  const filtered = filterLeads(leads, criteria).filter((lead) => !criteria.referredBy ||
+    (lead.referral?.isoOrganizationId ?? 'direct') === criteria.referredBy);
+  if (referralSort) filtered.sort((a, b) => {
+    const label = (lead) => lead.referral?.isoDisplayName || 'Direct / unattributed';
+    return label(a).localeCompare(label(b)) * (referralSort === 'ascending' ? 1 : -1);
+  });
+  return filtered;
+}
+
+function updateReferralFilter() {
+  const selected = referralFilter.value;
+  const partners = new Map(leads.filter((lead) => lead.referral)
+    .map(({ referral }) => [referral.isoOrganizationId, referral.isoDisplayName]));
+  referralFilter.replaceChildren(...[...referralFilter.options].slice(0, 2),
+    ...[...partners].sort((a, b) => a[1].localeCompare(b[1]))
+      .map(([value, label]) => el('option', { value, text: label })));
+  referralFilter.value = partners.has(selected) || selected === 'direct' ? selected : '';
+}
+
+function toggleReferralSort() {
+  referralSort = referralSort === 'ascending' ? 'descending' : 'ascending';
+  sortButton.closest('th').setAttribute('aria-sort', referralSort);
+  sortButton.querySelector('span').textContent = referralSort === 'ascending' ? '↑' : '↓';
+  mobileSortButton.textContent = 'Referred by: ' + (referralSort === 'ascending' ? 'A to Z' : 'Z to A');
+  renderRows();
+}
+sortButton.addEventListener('click', toggleReferralSort);
+mobileSortButton.addEventListener('click', toggleReferralSort);
 
 dialog.addEventListener('close', () => {
   const trigger = [...rows.querySelectorAll('.inquiry-name')].find((button) => button.dataset.leadId === dialogLeadId);
   (trigger ?? filters.querySelector('input')).focus();
   dialogLeadId = null;
+  if (location.hash.startsWith('#lead=')) history.replaceState(history.state, '', location.pathname + location.search);
 });
 
 const tag = (kind, label) => el('span', { class: `tag tag-${kind}`, text: label });
@@ -124,7 +160,7 @@ function renderInsights() {
 
 function renderRows() {
   const criteria = Object.fromEntries(new FormData(filters));
-  const visible = filterLeads(leads, criteria);
+  const visible = visibleLeads(criteria);
   document.getElementById('active-filters').replaceChildren(...Object.entries(criteria)
     .filter(([, value]) => value.trim())
     .map(([key, value]) => {
@@ -159,6 +195,7 @@ function renderRows() {
         el('td', { role: 'cell', class: 'wide' }, validationTag(lead)),
         el('td', { role: 'cell', class: 'screening-reasons wide', text: lead.validation.flags.map((flag) => flag.ruleId).join(', ') || '—' }),
         el('td', { role: 'cell', text: sourceLabel(lead.source) }),
+        el('td', { role: 'cell', class: 'referral-cell' }, referralPartnerLink(lead.referral?.isoOrganizationId, lead.referral?.isoDisplayName)),
         el('td', { role: 'cell', class: 'wide', text: formatDate(lead.receivedAt) }),
         el('td', { role: 'cell',}, el('button', {
           type: 'button',
@@ -227,7 +264,7 @@ function openLead(lead) {
       formStatus.textContent = 'Saving…';
       try {
         const updated = await saveReview(lead.id, {stage:stageSelect.value, note:noteInput.value, reason:reasonSelect.value});
-        leads = leads.map((item) => item.id === updated.id ? updated : item);
+        leads = leads.map((item) => item.id === updated.id ? { ...item, ...updated } : item);
         renderStats();
         renderBars('stage-bars', STAGES, 'stage');
         renderRows();
@@ -291,6 +328,14 @@ function openLead(lead) {
     el('dl', { class: 'ledger' },
       inquiryFields.map((name) => row(FIELDS[name].reviewLabel ?? FIELDS[name].label, answer(lead, name)))),
 
+    leadReferralPanel(lead.id, (current) => {
+      leads = leads.map((item) => item.id !== lead.id ? item : { ...item, referral: current && {
+        isoOrganizationId: current.isoOrganizationId, isoDisplayName: current.isoDisplayName,
+        method: current.method, attributedAt: current.firstAttributedAt,
+      } });
+      updateReferralFilter();
+      renderRows();
+    }),
     el('h3', { text: 'Contact (fictional)' }),
     el('dl', { class: 'ledger' },
       row('Name', lead.contactName), row('Email', lead.email), row('Phone', lead.phone)),
@@ -311,7 +356,7 @@ for (const [selectId, options] of [['stage', STAGES], ['source', SOURCES],
 
 document.getElementById('export-csv').addEventListener('click', () => {
   const criteria = Object.fromEntries(new FormData(filters));
-  const visible = filterLeads(leads, criteria);
+  const visible = visibleLeads(criteria);
   if (visible.length === 0) {
     resultCount.textContent = 'No demo leads match the filters; nothing to export.';
     return;
@@ -332,17 +377,29 @@ filters.addEventListener('input', renderRows);
 filters.addEventListener('submit', (event) => event.preventDefault());
 filters.addEventListener('reset', () => setTimeout(renderRows)); // run after the fields have cleared
 
+function openLinkedLead() {
+  const id = new URLSearchParams(location.hash.slice(1)).get('lead');
+  if (!id) return;
+  const lead = leads.find((item) => item.id === id);
+  if (lead && !dialog.open) openLead(lead);
+  else if (!lead) resultCount.textContent = 'The linked inquiry could not be found.';
+}
+
+window.addEventListener('hashchange', openLinkedLead);
+
 async function init() {
   try {
     adminSession = await loadAdminSession();
     const user = document.getElementById('admin-user');
     if (user) user.textContent = adminSession.username;
     leads = await listLeads();
+    updateReferralFilter();
     renderStats();
     renderInsights();
     renderBars('stage-bars', STAGES, 'stage');
     renderBars('source-bars', SOURCES, 'source');
     renderRows();
+    openLinkedLead();
   } catch (error) {
     resultCount.textContent = error.message;
   }
