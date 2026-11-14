@@ -39,28 +39,30 @@ test('a backup taken while the database is open and writing is complete and veri
 
 test('the rehearsal migrates and restores copies only, and proves existing rows are unchanged', (t) => {
   const dir = tempDir(t);
-  const live = join(dir, 'v2.sqlite');
+  const live = join(dir, 'v3.sqlite');
   const raw = new DatabaseSync(live);
   raw.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
-  runMigrations(raw, MIGRATIONS.slice(0, 2));
+  runMigrations(raw, MIGRATIONS.slice(0, 3));
   raw.prepare(`INSERT INTO leads(id,demo,contact_name,business_name,email,phone,industry,state,time_in_business,use_of_funds,has_existing_financing,stage,received_at,created_at,updated_at)
     VALUES('DEMO-OLD-1',1,'Riley Sample','Example Street Bakery','riley.sample@example.com','(203) 555-0101','retail','CT','2_5y','inventory','no','in_review','2026-10-01T00:00:00.000Z','2026-10-01T00:00:00.000Z','2026-10-01T00:00:00.000Z')`).run();
   raw.prepare(`INSERT INTO iso_organizations(id,display_name,name_key,acquisition_source,stage,verification_status,created_at,updated_at)
     VALUES('ISO-OLD-1','Sample Harbor Partners','sample harbor partners','csv_import','active_partner','verified','2026-10-01','2026-10-01')`).run();
+  raw.prepare(`INSERT INTO lead_referrals(lead_id,iso_organization_id,method,first_attributed_at,updated_at,updated_by)
+    VALUES('DEMO-OLD-1','ISO-OLD-1','manual','2026-10-01','2026-10-01','reviewer')`).run();
   const backup = join(dir, 'backup.sqlite');
   const taken = backupDatabase(live, backup);
   raw.close();
-  assert.equal(taken.schemaVersion, 2);
+  assert.equal(taken.schemaVersion, 3);
 
   const result = rehearse(backup);
   assert.equal(result.passed, true, JSON.stringify(result.checks.filter((c) => !c.pass)));
   assert.equal(result.checks.length, 12);
-  assert.deepEqual([result.backup.schemaVersion, result.migrated.schemaVersion], [2, 3]);
-  assert.deepEqual(result.migrated.tablesAdded, ['iso_referral_codes', 'lead_referral_events', 'lead_referrals', 'lead_submission_keys']);
-  assert.deepEqual([result.migrated.rows.leads, result.migrated.rows.iso_organizations], [1, 1]);
+  assert.deepEqual([result.backup.schemaVersion, result.migrated.schemaVersion], [3, 4]);
+  assert.deepEqual(result.migrated.tablesAdded, ['lead_funnel_context']);
+  assert.deepEqual([result.migrated.rows.leads, result.migrated.rows.iso_organizations, result.migrated.rows.lead_referrals], [1, 1, 1]);
   // The backup is untouched and still the old schema: it remains a valid rollback point.
   const after = inspectDatabase(backup);
-  assert.deepEqual([after.sha256, after.schemaVersion], [taken.sha256, 2]);
+  assert.deepEqual([after.sha256, after.schemaVersion], [taken.sha256, 3]);
 
   // A damaged backup is reported, not rehearsed as if it were fine.
   const damaged = join(dir, 'damaged.sqlite');

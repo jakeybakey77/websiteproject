@@ -228,6 +228,8 @@ function openLead(lead) {
   const inquiryFields = [
     'industry', 'state', 'timeInBusiness', 'monthlyRevenue', 'amountRequested', 'useOfFunds',
     'useOfFundsDetail', 'hasExistingFinancing', 'existingFinancingTypes', 'existingFinancingBalance',
+    ...['constructionPaymentTiming', 'existingFinancingPaymentFrequency', 'existingFinancingRemainingTerm']
+      .filter((name) => lead[name] != null),
   ];
 
   const stageSelect = el('select', {id:'review-stage', name:'stage', required:true},
@@ -326,7 +328,11 @@ function openLead(lead) {
 
     el('h3', { text: 'Inquiry' }),
     el('dl', { class: 'ledger' },
-      inquiryFields.map((name) => row(FIELDS[name].reviewLabel ?? FIELDS[name].label, answer(lead, name)))),
+      inquiryFields.map((name) => row(FIELDS[name].reviewLabel ?? FIELDS[name].label, answer(lead, name))),
+      lead.state === 'CT' ? el('div', {}, el('dt', {text: 'State business registry'}), el('dd', {}, el('a', {
+        href: 'https://service.ct.gov/business/s/onlinebusinesssearch?language=en_US',
+        target: '_blank', rel: 'noopener noreferrer', text: 'Search Connecticut business records',
+      }))) : null),
 
     leadReferralPanel(lead.id, (current) => {
       leads = leads.map((item) => item.id !== lead.id ? item : { ...item, referral: current && {

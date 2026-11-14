@@ -83,6 +83,19 @@ export const FIELDS = {
     hint: 'Where the business mainly operates.',
     required: 'Select the state where the business mainly operates.',
   },
+  constructionPaymentTiming: {
+    label: 'After you invoice for completed work, how long does it usually take to get paid? (optional)',
+    reviewLabel: 'Typical invoice payment timing',
+    type: 'select',
+    options: [
+      opt('within_30_days', 'Within 30 days'),
+      opt('31_60_days', '31 to 60 days'),
+      opt('61_90_days', '61 to 90 days'),
+      opt('over_90_days', 'Over 90 days'),
+      opt('unsure', 'Varies or not sure'),
+    ],
+    showIf: (values) => values.industry === 'construction',
+  },
   timeInBusiness: {
     label: 'Time in business',
     type: 'radio',
@@ -133,6 +146,29 @@ export const FIELDS = {
     type: 'currency',
     showIf: (values) => values.hasExistingFinancing === 'yes',
   },
+  existingFinancingPaymentFrequency: {
+    label: 'How often do you make payments? (optional)',
+    reviewLabel: 'Existing financing payment frequency',
+    hint: 'If more than one obligation applies, answer for the one with the largest regular payment.',
+    type: 'select',
+    options: [
+      opt('daily', 'Daily'), opt('weekly', 'Weekly'), opt('monthly', 'Monthly'),
+      opt('other', 'Other'), opt('unsure', 'Not sure'),
+    ],
+    showIf: (values) => values.hasExistingFinancing === 'yes',
+  },
+  existingFinancingRemainingTerm: {
+    label: 'How much longer do you expect to make payments? (optional)',
+    reviewLabel: 'Existing financing time remaining',
+    hint: 'Answer for the same obligation as the payment frequency.',
+    type: 'select',
+    options: [
+      opt('under_3_months', 'Under 3 months'), opt('3_6_months', '3 to 6 months'),
+      opt('7_12_months', '7 to 12 months'), opt('over_12_months', 'Over 12 months'),
+      opt('unsure', 'Not sure'),
+    ],
+    showIf: (values) => values.hasExistingFinancing === 'yes',
+  },
   demoAcknowledged: {
     label: 'I understand this is a demonstration. Fictional inquiry data will be stored on this demo server for workflow testing.',
     reviewLabel: 'Demo acknowledgement',
@@ -145,8 +181,8 @@ export const STEPS = [
   {
     id: 'business',
     title: 'About the business',
-    intro: 'Three questions about what the business does and where.',
-    fields: ['industry', 'state', 'timeInBusiness'],
+    intro: 'Tell us what the business does and where it operates.',
+    fields: ['industry', 'constructionPaymentTiming', 'state', 'timeInBusiness'],
   },
   {
     id: 'funding',
@@ -158,7 +194,8 @@ export const STEPS = [
     id: 'obligations',
     title: 'Existing financing',
     intro: 'Loans, advances, credit lines or anything else the business is repaying.',
-    fields: ['hasExistingFinancing', 'existingFinancingTypes', 'existingFinancingBalance'],
+    fields: ['hasExistingFinancing', 'existingFinancingTypes', 'existingFinancingBalance',
+      'existingFinancingPaymentFrequency', 'existingFinancingRemainingTerm'],
   },
   {
     id: 'contact',
