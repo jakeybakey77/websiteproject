@@ -93,8 +93,8 @@ try {
     await page.locator('#state').selectOption('CT');
     await page.locator('[name=timeInBusiness][value="2_5y"]').check();
     await btn('Continue').click();
-    await page.locator('#monthlyRevenue').fill('50000');
-    await page.locator('#amountRequested').fill('25000');
+    await page.locator('[name=monthlyRevenue][value="50k_to_under_100k"]').check();
+    await page.locator('[name=amountRequested][value="10k_to_under_50k"]').check();
     await page.locator('#useOfFunds').selectOption('inventory');
     await btn('Continue').click();
     await page.locator('[name=hasExistingFinancing][value=no]').check();

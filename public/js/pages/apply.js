@@ -333,7 +333,7 @@ body.addEventListener('change', () => {
     wrapper.hidden = !isVisible(name, state.values);
     if (!wrapper.hidden) continue;
     for (const control of wrapper.querySelectorAll('input, select')) {
-      if (control.type === 'checkbox') control.checked = false;
+      if (control.type === 'checkbox' || control.type === 'radio') control.checked = false;
       else control.value = '';
     }
   }

@@ -69,6 +69,15 @@ export const FINANCING_TYPES = [
 // Field types: select | radio | checkboxes | currency | textarea | checkbox
 // `required` is the error message shown when the answer is missing.
 // `showIf` hides a field (and skips its validation) until the condition is met.
+const AMOUNT_BANDS = [
+  opt('under_10k', 'Under $10k'),
+  opt('10k_to_under_50k', '$10k to under $50k'),
+  opt('50k_to_under_100k', '$50k to under $100k'),
+  opt('100k_to_under_250k', '$100k to under $250k'),
+  opt('250k_plus', '$250k or more'),
+];
+const BALANCE_BANDS = [...AMOUNT_BANDS.slice(0, 3), opt('100k_plus', '$100k or more'), opt('unsure', 'Not sure')];
+
 export const FIELDS = {
   industry: {
     label: 'Industry',
@@ -104,15 +113,19 @@ export const FIELDS = {
   },
   monthlyRevenue: {
     label: 'Approximate monthly revenue',
-    type: 'currency',
+    type: 'radio',
+    options: AMOUNT_BANDS,
+    acceptsLegacyCurrency: true,
     hint: 'An estimate is fine. Use a typical month.',
-    required: 'Enter an approximate monthly revenue, for example 40,000.',
+    required: 'Select an approximate monthly revenue range.',
   },
   amountRequested: {
     label: 'Amount requested',
-    type: 'currency',
+    type: 'radio',
+    options: AMOUNT_BANDS,
+    acceptsLegacyCurrency: true,
     hint: 'How much funding you are looking for.',
-    required: 'Enter the amount you are looking for, for example 25,000.',
+    required: 'Select the range you are looking for.',
   },
   useOfFunds: {
     label: 'Intended use of funds',
@@ -143,7 +156,9 @@ export const FIELDS = {
   existingFinancingBalance: {
     label: 'Approximate total still owed (optional)',
     reviewLabel: 'Approximate total still owed',
-    type: 'currency',
+    type: 'radio',
+    options: BALANCE_BANDS,
+    acceptsLegacyCurrency: true,
     showIf: (values) => values.hasExistingFinancing === 'yes',
   },
   existingFinancingPaymentFrequency: {
