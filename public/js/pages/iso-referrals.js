@@ -60,6 +60,10 @@ export function createReferralsPanel(orgId) {
   function renderCodes({ eligibility, activeCode, codes }) {
     const eligible = eligibility.eligible;
     const blocked = !eligible || changing;
+    const missingRequirements = [
+      eligibility.stage !== 'active_partner' ? 'Active Partner — address the relationship stage in Overview.' : null,
+      eligibility.verificationStatus !== 'verified' ? 'Verified by reviewer — address business verification in Verification.' : null,
+    ].filter(Boolean);
     const issue = button('Issue demo referral link', () =>
       change(() => issueReferralCode(orgId), 'Demo referral link is active.', 'referral-active-link'), blocked);
     issue.id = 'referral-issue';
@@ -118,6 +122,7 @@ export function createReferralsPanel(orgId) {
       el('p', {}, 'Relationship stage: ' + isoLabel(ISO_STAGES, eligibility.stage)
         + ' · Verification: ' + isoLabel(VERIFICATION_STATUSES, eligibility.verificationStatus)),
       el('p', { class: 'dialog-note', hidden: eligible, text: 'Available only while the partner is Active and Verified.' }),
+      el('p', { class: 'dialog-note', hidden: eligible, text: 'Missing: ' + missingRequirements.join(' ') }),
       active,
       el('h3', { class: 'panel-sub', text: 'Issuance history' }),
       codes.length ? table('Referral code issuance history', ['Status', 'Created', 'Created by', 'Revoked', 'Revoked by', 'Reason'],
@@ -174,9 +179,9 @@ export function createReferralsPanel(orgId) {
             timestamp(item.receivedAt), labelFor(STAGES, item.merchantStage),
             item.method === 'manual' ? 'Manual' : 'Public referral link', timestamp(item.attributedAt),
           ])) : el('p', { class: 'empty', text: 'No referred inquiries in this date window.' }),
-        el('div', { class: 'detail-tags' },
+        pages > 1 ? el('div', { class: 'detail-tags' },
           button('Previous page', () => loadRecords(page - 1), page <= 1),
-          button('Next page', () => loadRecords(page + 1), page >= pages)));
+          button('Next page', () => loadRecords(page + 1), page >= pages)) : null);
       recordsStatus.textContent = 'Page ' + page + ' of ' + pages + ' · ' + total + ' referred inquiries';
       if (document.activeElement === document.body && !panel.closest('[hidden]')) {
         recordsStatus.tabIndex = -1;
