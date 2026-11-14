@@ -124,20 +124,50 @@ try {
   assert.equal(await btn('Next page').count(), 0);
   assert.equal(await btn('Previous page').count(), 0);
   await picture('v24-ineligible');
-  await page.route('**/api/admin/iso/organizations/*/referrals?*', async route => {
+  const codesRoute = '**/api/admin/iso/organizations/*/referral-codes';
+  for (const [stage, verificationStatus, expected] of [
+    ['applied', 'verified', /Missing: Active Partner.*Overview\.$/],
+    ['active_partner', 'unverified', /Missing: Verified by reviewer.*Verification\.$/],
+  ]) {
+    await page.route(codesRoute, async route => {
+      const response = await route.fetch();
+      const body = await response.json();
+      await route.fulfill({response, json: {...body, eligibility: {...body.eligibility, eligible: false, stage, verificationStatus}}});
+    });
+    await openReferrals(ineligible);
+    await visible(page.getByText(expected));
+    await page.unroute(codesRoute);
+  }
+
+  const recordsRoute = '**/api/admin/iso/organizations/*/referrals?*';
+  let total = 3;
+  const requestedPages = [];
+  await page.route(recordsRoute, async route => {
+    const pageNumber = new URL(route.request().url()).searchParams.get('page');
     const response = await route.fetch();
     const body = await response.json();
-    await route.fulfill({response, json: {...body, pageSize: 1, total: 2}});
+    requestedPages.push(pageNumber);
+    const items = Number(pageNumber) <= total ? [{leadId: 'QA-INQUIRY-' + pageNumber, receivedAt: '2026-01-01', merchantStage: 'new', method: 'public', attributedAt: '2026-01-01'}] : [];
+    await route.fulfill({response, json: {...body, items, pageSize: 1, total, summary: {...body.summary, attributedInquiries: total, totalMerchantInquiries: total, partnerShareOfSubmissions: 1}}});
   });
   await openReferrals(ineligible);
-  await visible(page.getByText(/^Page 1 of 2 ·/));
+  await visible(page.getByRole('link', {name: 'QA-INQUIRY-1'}));
   assert.ok(await btn('Previous page').isDisabled());
   await btn('Next page').click();
-  await visible(page.getByText(/^Page 2 of 2 ·/));
+  await visible(page.getByRole('link', {name: 'QA-INQUIRY-2'}));
+  assert.deepEqual(requestedPages.slice(0, 2), ['1', '2']);
+  assert.ok(await btn('Previous page').isEnabled());
+  assert.ok(await btn('Next page').isEnabled());
+  await btn('Next page').click();
+  await visible(page.getByRole('link', {name: 'QA-INQUIRY-3'}));
   assert.ok(await btn('Next page').isDisabled());
+  total = 1;
   await btn('Previous page').click();
-  await visible(page.getByText(/^Page 1 of 2 ·/));
-  await page.unroute('**/api/admin/iso/organizations/*/referrals?*');
+  await visible(page.getByText(/^Page 1 of 1 ·/));
+  await visible(page.getByRole('link', {name: 'QA-INQUIRY-1'}));
+  assert.equal(await btn('Previous page').count(), 0);
+  assert.equal(await btn('Next page').count(), 0);
+  await page.unroute(recordsRoute);
   assert.ok(await btn('Issue demo referral link').isDisabled());
   await waitText('Available only while the partner is Active and Verified.');
   await openReferrals(a);
@@ -150,6 +180,7 @@ try {
   await waitText('Referral link copied.');
   assert.ok(await page.evaluate(() => navigator.clipboard.readText()) === firstUrl, 'Clipboard contains the link');
   await fits();
+  await picture('desktop-iso-referrals');
   await picture('v24-eligible');
 
   const firstCode = new URL(firstUrl).searchParams.get('ref');
