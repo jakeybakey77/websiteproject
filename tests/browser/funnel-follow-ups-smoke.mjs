@@ -55,16 +55,20 @@ try {
     await page.locator('#state').selectOption('CT');
     await page.locator('[name=timeInBusiness][value="2_5y"]').check();
     await page.locator('#next').click();
-    await page.locator('#monthlyRevenue').fill('50000');
-    await page.locator('#amountRequested').fill('25000');
+    await page.locator('[name=monthlyRevenue][value="50k_to_under_100k"]').check();
+    await page.locator('[name=amountRequested][value="10k_to_under_50k"]').check();
     await page.locator('#useOfFunds').selectOption('inventory');
     await page.locator('#next').click();
     await page.locator('[name=hasExistingFinancing][value=yes]').check();
+    await page.getByRole('group', {name: /Approximate total still owed/}).getByRole('radio', {name: 'Under $10k', exact: true}).check();
     await page.locator('#' + frequency).selectOption(details[frequency]);
     await page.locator('#' + term).selectOption(details[term]);
     await page.locator('[name=hasExistingFinancing][value=no]').check();
     for (const field of [frequency, term]) assert.equal(await page.locator('#field-' + field).isVisible(), false);
     await page.locator('[name=hasExistingFinancing][value=yes]').check();
+    const owed = page.getByRole('group', {name: /Approximate total still owed/}).getByRole('radio', {name: 'Under $10k', exact: true});
+    assert.equal(await owed.isChecked(), false);
+    await owed.check();
     for (const field of [frequency, term]) {
       assert.equal(await page.locator('#' + field).inputValue(), '');
       await page.locator('#' + field).selectOption(details[field]);
@@ -73,13 +77,13 @@ try {
     await page.locator('#demoAcknowledged').check();
     await page.locator('#next').click();
     await page.getByRole('heading', {name: 'Review your answers'}).waitFor();
-    for (const label of [/31.{0,5}60 days/i, /^Weekly$/i, /7.{0,5}12 months/i]) {
+    for (const label of [/31.{0,5}60 days/i, /^Weekly$/i, /7.{0,5}12 months/i, /^Under \$10k$/, /^\$50k to under \$100k$/, /^\$10k to under \$50k$/]) {
       assert.ok(await page.getByText(label).first().isVisible(), 'Review displays ' + label);
     }
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
     if (screenshots) {
       await mkdir(screenshots, { recursive: true });
-      await page.screenshot({path: join(screenshots, 'v25-funnel-review-' + width + '.png'), fullPage: true});
+      await page.screenshot({path: join(screenshots, 'amount-bands-review-' + width + '.png'), fullPage: true});
     }
     const submitted = page.waitForResponse(res => res.url().endsWith('/api/inquiries') && res.request().method() === 'POST');
     await page.locator('#next').click();
@@ -98,10 +102,10 @@ try {
     const registry = dialog.getByRole('link', { name: 'Search Connecticut business records' });
     assert.equal(await registry.getAttribute('href'), 'https://service.ct.gov/business/s/onlinebusinesssearch?language=en_US');
     assert.equal(await registry.getAttribute('rel'), 'noopener noreferrer');
-    for (const label of [/31.{0,5}60 days/i, /^Weekly$/i, /7.{0,5}12 months/i]) {
+    for (const label of [/31.{0,5}60 days/i, /^Weekly$/i, /7.{0,5}12 months/i, /^Under \$10k$/, /^\$50k to under \$100k$/, /^\$10k to under \$50k$/]) {
       await dialog.getByText(label).first().waitFor();
     }
-    if (screenshots) await page.screenshot({path: join(screenshots, 'v25-funnel-admin-' + width + '.png'), fullPage: true});
+    if (screenshots) await page.screenshot({path: join(screenshots, 'amount-bands-admin-' + width + '.png'), fullPage: true});
     await page.close();
   }
   console.log('Funnel QA passed: API persistence, hidden answers, optional omission, branch edits, review, and two viewport widths.');

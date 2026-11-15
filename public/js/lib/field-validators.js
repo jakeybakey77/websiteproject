@@ -28,11 +28,12 @@ export function validateField(name, values) {
   const value = values[name];
   if (isBlank(value)) return field.required ?? null;
 
-  if (field.type === 'currency') {
+  if (field.type === 'currency' || (field.acceptsLegacyCurrency && parseCurrency(value) !== null)) {
     const amount = parseCurrency(value);
     if (amount === null) return 'Enter a dollar amount using numbers only, for example 25,000.';
     if (amount <= 0) return 'Enter an amount greater than zero.';
     if (amount > MAX_DOLLARS) return 'That amount looks too large. Check for extra digits.';
+    return null;
   }
   if ((field.type === 'select' || field.type === 'radio') && !field.options.some((o) => o.value === value)) {
     return field.required ?? 'Select one of the listed options.';
@@ -60,7 +61,7 @@ export function normalizeAnswers(values) {
   const answers = {};
   for (const [name, field] of Object.entries(FIELDS)) {
     if (!isVisible(name, values) || isBlank(values[name])) continue;
-    if (field.type === 'currency') answers[name] = parseCurrency(values[name]);
+    if (field.type === 'currency' || (field.acceptsLegacyCurrency && parseCurrency(values[name]) !== null)) answers[name] = parseCurrency(values[name]);
     else if (field.type === 'textarea') answers[name] = String(values[name]).trim();
     else answers[name] = values[name];
   }
